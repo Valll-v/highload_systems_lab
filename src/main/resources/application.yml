@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: ticketing
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ticketing}
+    username: ${DB_USER:ticketing}
+    password: ${DB_PASSWORD:ticketing}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 50
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
