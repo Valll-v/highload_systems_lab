@@ -1,0 +1,73 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-bookings
+      author: valerii
+      changes:
+        - createTable:
+            tableName: bookings
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: customer_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_bookings_customer, references: users(id) } }
+              - column: { name: event_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_bookings_event, references: events(id) } }
+              - column: { name: status, type: varchar(32), constraints: { nullable: false } }
+              - column: { name: total_price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp with time zone, defaultValueComputed: now(), constraints: { nullable: false } }
+              - column: { name: cancelled_at, type: timestamp with time zone }
+        - createIndex:
+            tableName: bookings
+            indexName: ix_bookings_customer
+            columns:
+              - column: { name: customer_id }
+        - createIndex:
+            tableName: bookings
+            indexName: ix_bookings_event_status
+            columns:
+              - column: { name: event_id }
+              - column: { name: status }
+  - changeSet:
+      id: 004-create-seat-reservations
+      author: valerii
+      changes:
+        - createTable:
+            tableName: seat_reservations
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: event_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_reservations_event, references: events(id) } }
+              - column: { name: seat_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_reservations_seat, references: seats(id) } }
+              - column: { name: booking_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_reservations_booking, references: bookings(id), deleteCascade: true } }
+              - column: { name: created_at, type: timestamp with time zone, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: seat_reservations
+            columnNames: event_id, seat_id
+            constraintName: uk_reservations_event_seat
+        - createIndex:
+            tableName: seat_reservations
+            indexName: ix_reservations_booking
+            columns:
+              - column: { name: booking_id }
+  - changeSet:
+      id: 004-create-tickets
+      author: valerii
+      changes:
+        - createTable:
+            tableName: tickets
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: booking_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_tickets_booking, references: bookings(id) } }
+              - column: { name: event_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_tickets_event, references: events(id) } }
+              - column: { name: seat_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_tickets_seat, references: seats(id) } }
+              - column: { name: code, type: varchar(64), constraints: { nullable: false, unique: true, uniqueConstraintName: uk_tickets_code } }
+              - column: { name: price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: status, type: varchar(32), constraints: { nullable: false } }
+              - column: { name: issued_at, type: timestamp with time zone, defaultValueComputed: now(), constraints: { nullable: false } }
+        - createIndex:
+            tableName: tickets
+            indexName: ix_tickets_booking
+            columns:
+              - column: { name: booking_id }
+        - createIndex:
+            tableName: tickets
+            indexName: ix_tickets_event_status
+            columns:
+              - column: { name: event_id }
+              - column: { name: status }

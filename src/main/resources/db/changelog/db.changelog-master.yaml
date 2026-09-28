@@ -1,1 +1,9 @@
-databaseChangeLog: []
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-users.yaml
+  - include:
+      file: db/changelog/002-venues.yaml
+  - include:
+      file: db/changelog/003-events.yaml
+  - include:
+      file: db/changelog/004-bookings.yaml

@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-categories
+      author: valerii
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: name, type: varchar(128), constraints: { nullable: false, unique: true, uniqueConstraintName: uk_categories_name } }
+  - changeSet:
+      id: 003-create-events
+      author: valerii
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: title, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: description, type: text }
+              - column: { name: category_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_events_category, references: categories(id) } }
+              - column: { name: organizer_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_events_organizer, references: users(id) } }
+              - column: { name: hall_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_events_hall, references: halls(id) } }
+              - column: { name: starts_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: ends_at, type: timestamp with time zone, constraints: { nullable: false } }
+              - column: { name: price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: status, type: varchar(32), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp with time zone, defaultValueComputed: now(), constraints: { nullable: false } }
+        - createIndex:
+            tableName: events
+            indexName: ix_events_status_starts_at
+            columns:
+              - column: { name: status }
+              - column: { name: starts_at }
+        - createIndex:
+            tableName: events
+            indexName: ix_events_organizer
+            columns:
+              - column: { name: organizer_id }
+        - createIndex:
+            tableName: events
+            indexName: ix_events_hall_starts_at
+            columns:
+              - column: { name: hall_id }
+              - column: { name: starts_at }

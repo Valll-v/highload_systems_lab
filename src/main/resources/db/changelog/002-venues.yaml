@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-venues
+      author: valerii
+      changes:
+        - createTable:
+            tableName: venues
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: name, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: city, type: varchar(128), constraints: { nullable: false } }
+              - column: { name: address, type: varchar(512), constraints: { nullable: false } }
+  - changeSet:
+      id: 002-create-halls
+      author: valerii
+      changes:
+        - createTable:
+            tableName: halls
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: venue_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_halls_venue, references: venues(id), deleteCascade: true } }
+              - column: { name: name, type: varchar(255), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: halls
+            columnNames: venue_id, name
+            constraintName: uk_halls_venue_name
+  - changeSet:
+      id: 002-create-seats
+      author: valerii
+      changes:
+        - createTable:
+            tableName: seats
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: hall_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_seats_hall, references: halls(id), deleteCascade: true } }
+              - column: { name: row_no, type: int, constraints: { nullable: false } }
+              - column: { name: seat_no, type: int, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            tableName: seats
+            columnNames: hall_id, row_no, seat_no
+            constraintName: uk_seats_hall_row_seat
