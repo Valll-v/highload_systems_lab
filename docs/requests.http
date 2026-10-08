@@ -1,0 +1,86 @@
+### Register admin
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{"email": "admin@example.com", "fullName": "Admin", "role": "ADMIN"}
+
+### Register organizer
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{"email": "org@example.com", "fullName": "Organizer", "role": "ORGANIZER"}
+
+### Register customer
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{"email": "user@example.com", "fullName": "Customer"}
+
+### Create category (admin = 1)
+POST http://localhost:8080/api/categories
+X-User-Id: 1
+Content-Type: application/json
+
+{"name": "Concerts"}
+
+### Create venue
+POST http://localhost:8080/api/venues
+X-User-Id: 1
+Content-Type: application/json
+
+{"name": "Ice Palace", "city": "Saint Petersburg", "address": "Pr. Pyatiletok 1"}
+
+### Create hall 5x10
+POST http://localhost:8080/api/venues/1/halls
+X-User-Id: 1
+Content-Type: application/json
+
+{"name": "Main", "rows": 5, "seatsPerRow": 10}
+
+### Create event (organizer = 2)
+POST http://localhost:8080/api/events
+X-User-Id: 2
+Content-Type: application/json
+
+{
+  "title": "Rock night",
+  "description": "Live show",
+  "categoryId": 1,
+  "hallId": 1,
+  "startsAt": "2026-12-01T19:00:00+03:00",
+  "endsAt": "2026-12-01T22:00:00+03:00",
+  "price": 1500.00
+}
+
+### Submit for moderation
+POST http://localhost:8080/api/events/1/submit
+X-User-Id: 2
+
+### Publish (admin)
+POST http://localhost:8080/api/events/1/publish
+X-User-Id: 1
+
+### Catalogue
+GET http://localhost:8080/api/events?city=Saint Petersburg
+
+### Seat map
+GET http://localhost:8080/api/events/1/seats
+
+### Book seats (customer = 3)
+POST http://localhost:8080/api/bookings
+X-User-Id: 3
+Content-Type: application/json
+
+{"eventId": 1, "seatIds": [1, 2]}
+
+### My tickets
+GET http://localhost:8080/api/tickets
+X-User-Id: 3
+
+### Sales report (organizer)
+GET http://localhost:8080/api/events/1/sales
+X-User-Id: 2
+
+### Cancel booking
+POST http://localhost:8080/api/bookings/1/cancel
+X-User-Id: 3
