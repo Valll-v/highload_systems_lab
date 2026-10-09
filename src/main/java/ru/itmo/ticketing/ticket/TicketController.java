@@ -2,6 +2,7 @@ package ru.itmo.ticketing.ticket;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,24 +33,24 @@ public class TicketController {
 
     @GetMapping("/tickets")
     @RequireRole(UserRole.CUSTOMER)
-    public List<TicketResponse> getMyTickets(@CurrentUser User customer) {
-        return tickets.forCustomer(customer.getId());
+    public ResponseEntity<List<TicketResponse>> getMyTickets(@CurrentUser User customer) {
+        return ResponseEntity.ok(tickets.forCustomer(customer.getId()));
     }
 
     @GetMapping("/events/{id}/sales")
     @RequireRole({UserRole.ORGANIZER, UserRole.ADMIN})
     @Transactional(readOnly = true)
-    public SalesReport sales(@CurrentUser User actor, @PathVariable Long id) {
+    public ResponseEntity<SalesReport> sales(@CurrentUser User actor, @PathVariable Long id) {
         Event event = events.get(id);
         if (!event.isOwnedBy(actor) && actor.getRole() != UserRole.ADMIN) {
             throw new ForbiddenException("Sales report is available to the event organizer only");
         }
         int capacity = event.getHall().getSeats().size();
         long sold = tickets.countValid(id);
-        return new SalesReport(
+        return ResponseEntity.ok(new SalesReport(
                 id, capacity, sold, tickets.countCancelled(id),
                 capacity - reservations.reservedCount(id),
                 bookings.countActive(id),
-                tickets.revenue(id));
+                tickets.revenue(id)));
     }
 }

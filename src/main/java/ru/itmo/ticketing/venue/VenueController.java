@@ -2,7 +2,6 @@ package ru.itmo.ticketing.venue;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.itmo.ticketing.common.RequireRole;
@@ -33,13 +31,13 @@ public class VenueController {
     private final VenueService service;
 
     @GetMapping("/venues")
-    public List<VenueResponse> list() {
-        return service.listVenues();
+    public ResponseEntity<List<VenueResponse>> list() {
+        return ResponseEntity.ok(service.listVenues());
     }
 
     @GetMapping("/venues/{id}")
-    public VenueResponse get(@PathVariable Long id) {
-        return service.getVenueResponse(id);
+    public ResponseEntity<VenueResponse> get(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getVenueResponse(id));
     }
 
     @PostMapping("/venues")
@@ -52,15 +50,15 @@ public class VenueController {
 
     @PutMapping("/venues/{id}")
     @RequireRole(UserRole.ADMIN)
-    public VenueResponse update(@PathVariable Long id, @Valid @RequestBody CreateVenueRequest request) {
-        return service.update(id, request);
+    public ResponseEntity<VenueResponse> update(@PathVariable Long id, @Valid @RequestBody CreateVenueRequest request) {
+        return ResponseEntity.ok(service.update(id, request));
     }
 
     @DeleteMapping("/venues/{id}")
     @RequireRole(UserRole.ADMIN)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteVenue(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/venues/{id}/halls")
@@ -72,12 +70,12 @@ public class VenueController {
     }
 
     @GetMapping("/halls/{id}")
-    public HallResponse getHall(@PathVariable Long id) {
-        return service.getHallResponse(id);
+    public ResponseEntity<HallResponse> getHall(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getHallResponse(id));
     }
 
     @GetMapping("/halls/{id}/seats")
-    public List<SeatResponse> seats(@PathVariable Long id) {
-        return service.listSeatResponses(id);
+    public ResponseEntity<List<SeatResponse>> seats(@PathVariable Long id) {
+        return ResponseEntity.ok(service.listSeatResponses(id));
     }
 }

@@ -39,32 +39,32 @@ public class EventController {
     private final UserRepository users;
 
     @GetMapping
-    public Page<EventResponse> search(@RequestParam(required = false) Long categoryId,
+    public ResponseEntity<Page<EventResponse>> search(@RequestParam(required = false) Long categoryId,
                                       @RequestParam(required = false) String city,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
                                       @RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "20") int size) {
         var pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startsAt"));
-        return service.search(categoryId, city, from, to, pageable);
+        return ResponseEntity.ok(service.search(categoryId, city, from, to, pageable));
     }
 
     @GetMapping("/{id}")
-    public EventResponse get(@PathVariable Long id,
+    public ResponseEntity<EventResponse> get(@PathVariable Long id,
                              @RequestHeader(value = "X-User-Id", required = false) Long viewerId) {
         User viewer = viewerId == null ? null : users.findById(viewerId).orElse(null);
-        return service.getVisible(viewer, id);
+        return ResponseEntity.ok(service.getVisible(viewer, id));
     }
 
     @GetMapping("/{id}/seats")
-    public List<EventSeatResponse> seats(@PathVariable Long id) {
-        return service.seatMap(id);
+    public ResponseEntity<List<EventSeatResponse>> seats(@PathVariable Long id) {
+        return ResponseEntity.ok(service.seatMap(id));
     }
 
     @GetMapping("/my")
     @RequireRole(UserRole.ORGANIZER)
-    public List<EventResponse> getMyEvents(@CurrentUser User organizer) {
-        return service.listMine(organizer);
+    public ResponseEntity<List<EventResponse>> getMyEvents(@CurrentUser User organizer) {
+        return ResponseEntity.ok(service.listMine(organizer));
     }
 
     @PostMapping
@@ -77,37 +77,37 @@ public class EventController {
 
     @PutMapping("/{id}")
     @RequireRole(UserRole.ORGANIZER)
-    public EventResponse update(@CurrentUser User organizer, @PathVariable Long id, @Valid @RequestBody EventRequest request) {
-        return service.update(organizer, id, request);
+    public ResponseEntity<EventResponse> update(@CurrentUser User organizer, @PathVariable Long id, @Valid @RequestBody EventRequest request) {
+        return ResponseEntity.ok(service.update(organizer, id, request));
     }
 
     @PostMapping("/{id}/submit")
     @RequireRole(UserRole.ORGANIZER)
-    public EventResponse submit(@CurrentUser User organizer, @PathVariable Long id) {
-        return service.submit(organizer, id);
+    public ResponseEntity<EventResponse> submit(@CurrentUser User organizer, @PathVariable Long id) {
+        return ResponseEntity.ok(service.submit(organizer, id));
     }
 
     @PostMapping("/{id}/cancel")
     @RequireRole({UserRole.ORGANIZER, UserRole.ADMIN})
-    public EventResponse cancel(@CurrentUser User actor, @PathVariable Long id) {
-        return service.cancel(actor, id);
+    public ResponseEntity<EventResponse> cancel(@CurrentUser User actor, @PathVariable Long id) {
+        return ResponseEntity.ok(service.cancel(actor, id));
     }
 
     @GetMapping("/moderation")
     @RequireRole(UserRole.ADMIN)
-    public List<EventResponse> moderationQueue() {
-        return service.listPendingModeration();
+    public ResponseEntity<List<EventResponse>> moderationQueue() {
+        return ResponseEntity.ok(service.listPendingModeration());
     }
 
     @PostMapping("/{id}/publish")
     @RequireRole(UserRole.ADMIN)
-    public EventResponse publish(@PathVariable Long id) {
-        return service.publish(id);
+    public ResponseEntity<EventResponse> publish(@PathVariable Long id) {
+        return ResponseEntity.ok(service.publish(id));
     }
 
     @PostMapping("/{id}/reject")
     @RequireRole(UserRole.ADMIN)
-    public EventResponse reject(@PathVariable Long id) {
-        return service.reject(id);
+    public ResponseEntity<EventResponse> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(service.reject(id));
     }
 }

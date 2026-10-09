@@ -37,19 +37,19 @@ public class BookingController {
 
     @GetMapping
     @RequireRole(UserRole.CUSTOMER)
-    public List<BookingResponse> getMyBookings(@CurrentUser User customer) {
-        return service.listForCustomer(customer);
+    public ResponseEntity<List<BookingResponse>> getMyBookings(@CurrentUser User customer) {
+        return ResponseEntity.ok(service.listForCustomer(customer));
     }
 
     @GetMapping("/{id}")
     @RequireRole({UserRole.CUSTOMER, UserRole.ADMIN})
-    public BookingResponse get(@CurrentUser User actor, @PathVariable Long id) {
-        return service.get(actor, id);
+    public ResponseEntity<BookingResponse> get(@CurrentUser User actor, @PathVariable Long id) {
+        return ResponseEntity.ok(service.get(actor, id));
     }
 
     @PostMapping("/{id}/cancel")
     @RequireRole({UserRole.CUSTOMER, UserRole.ADMIN})
-    public BookingResponse cancel(@CurrentUser User actor, @PathVariable Long id) {
-        return service.cancel(actor, id);
+    public ResponseEntity<BookingResponse> cancel(@CurrentUser User actor, @PathVariable Long id) {
+        return ResponseEntity.ok(service.cancel(actor, id));
     }
 }
