@@ -4,12 +4,23 @@ Spring Boot 3, Java 21, PostgreSQL, Liquibase.
 
 ## Запуск
 
+Всё в Docker (сборка jar внутри образа, Java локально не нужна):
+
 ```bash
-docker compose up -d
+docker compose up --build
+```
+
+Приложение на `http://localhost:8080`, PostgreSQL на `localhost:5432`.
+
+Локально, только БД в Docker:
+
+```bash
+docker compose up -d postgres
 mvn spring-boot:run
 ```
 
-Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
+Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+(дефолты — `localhost:5432/ticketing`, `ticketing/ticketing`).
 
 Тесты (`mvn test`) используют встроенный PostgreSQL, Docker для них не нужен.
 
