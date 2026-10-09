@@ -18,7 +18,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             join fetch h.venue v
             where e.status = ru.itmo.ticketing.event.EventStatus.PUBLISHED
               and (:categoryId is null or e.category.id = :categoryId)
-              and (:city is null or lower(v.city) = lower(:city))
+              and (:city is null or lower(v.city) = :city)
               and (cast(:from as timestamp) is null or e.startsAt >= :from)
               and (cast(:to as timestamp) is null or e.startsAt <= :to)
             """)

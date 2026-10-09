@@ -1,18 +1,15 @@
 package ru.itmo.ticketing;
 
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY)
-class SchemaMigrationTest {
+class SchemaMigrationTest extends IntegrationTestBase {
 
     @Autowired
     private JdbcTemplate jdbc;

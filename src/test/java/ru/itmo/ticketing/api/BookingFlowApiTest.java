@@ -1,16 +1,14 @@
 package ru.itmo.ticketing.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.itmo.ticketing.support.ApiClient;
+import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import java.util.List;
 import java.util.Map;
@@ -18,11 +16,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static ru.itmo.ticketing.support.ApiClient.expect;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookingFlowApiTest {
+class BookingFlowApiTest extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mvc;
@@ -59,6 +54,8 @@ class BookingFlowApiTest {
 
         var catalogue = expect(api.get(null, "/api/events?city=saint petersburg"), 200);
         assertThat(catalogue.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(event);
+        var unfiltered = expect(api.get(null, "/api/events"), 200);
+        assertThat(unfiltered.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(event);
         var seatMap = expect(api.get(null, "/api/events/" + event + "/seats"), 200);
         assertThat(seatMap.body().findValues("available")).allMatch(n -> n.asBoolean());
 

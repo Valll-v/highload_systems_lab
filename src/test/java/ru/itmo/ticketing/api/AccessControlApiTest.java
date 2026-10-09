@@ -1,26 +1,21 @@
 package ru.itmo.ticketing.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.itmo.ticketing.support.ApiClient;
+import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static ru.itmo.ticketing.support.ApiClient.expect;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AccessControlApiTest {
+class AccessControlApiTest extends IntegrationTestBase {
 
     @Autowired
     private MockMvc mvc;

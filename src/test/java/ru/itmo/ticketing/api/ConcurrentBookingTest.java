@@ -1,11 +1,8 @@
 package ru.itmo.ticketing.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.itmo.ticketing.booking.BookingService;
@@ -13,6 +10,7 @@ import ru.itmo.ticketing.common.ConflictException;
 import ru.itmo.ticketing.support.ApiClient;
 import ru.itmo.ticketing.user.User;
 import ru.itmo.ticketing.user.UserRepository;
+import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY)
-class ConcurrentBookingTest {
+class ConcurrentBookingTest extends IntegrationTestBase {
 
     private static final int CUSTOMERS = 16;
 

@@ -108,7 +108,8 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public Page<EventResponse> search(Long categoryId, String city, OffsetDateTime from, OffsetDateTime to, Pageable pageable) {
-        return events.findPublished(categoryId, city, from, to, pageable).map(EventResponse::from);
+        String normalizedCity = city == null || city.isBlank() ? null : city.trim().toLowerCase();
+        return events.findPublished(categoryId, normalizedCity, from, to, pageable).map(EventResponse::from);
     }
 
     @Transactional(readOnly = true)

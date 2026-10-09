@@ -22,7 +22,7 @@ mvn spring-boot:run
 Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 (дефолты — `localhost:5432/ticketing`, `ticketing/ticketing`).
 
-Тесты (`mvn test`) используют встроенный PostgreSQL, Docker для них не нужен.
+Тесты (`mvn test`) поднимают PostgreSQL через Testcontainers, нужен запущенный Docker.
 
 ## Роли
 
