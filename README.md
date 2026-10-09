@@ -45,7 +45,7 @@ mvn spring-boot:run
 | GET    | /api/events                       | —                |
 | GET    | /api/events/{id}                  | —                |
 | GET    | /api/events/{id}/seats            | —                |
-| GET    | /api/events/mine                  | ORGANIZER        |
+| GET    | /api/events/my                  | ORGANIZER        |
 | POST   | /api/events                       | ORGANIZER        |
 | PUT    | /api/events/{id}                  | ORGANIZER        |
 | POST   | /api/events/{id}/submit           | ORGANIZER        |

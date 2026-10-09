@@ -9,24 +9,33 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "venues")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Venue {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @Column(nullable = false)
     private String name;
 
+    @Setter
     @Column(nullable = false, length = 128)
     private String city;
 
+    @Setter
     @Column(nullable = false, length = 512)
     private String address;
 
@@ -34,45 +43,10 @@ public class Venue {
     @OrderBy("id")
     private List<Hall> halls = new ArrayList<>();
 
-    protected Venue() {
-    }
-
     public Venue(String name, String city, String address) {
         this.name = name;
         this.city = city;
         this.address = address;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public List<Hall> getHalls() {
-        return halls;
     }
 
     public Hall addHall(String hallName) {

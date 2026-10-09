@@ -47,7 +47,7 @@ class AccessControlApiTest {
         assertThat(api.get(organizer, "/api/bookings").status()).isEqualTo(403);
         assertThat(api.post(admin, "/api/events", Map.of()).status()).isEqualTo(403);
         assertThat(api.get(customer, "/api/events/moderation").status()).isEqualTo(403);
-        assertThat(api.get(customer, "/api/events/mine").status()).isEqualTo(403);
+        assertThat(api.get(customer, "/api/events/my").status()).isEqualTo(403);
     }
 
     @Test

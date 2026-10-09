@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.ticket;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import ru.itmo.ticketing.venue.SeatReservationService;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api")
 public class TicketController {
 
@@ -28,17 +30,9 @@ public class TicketController {
     private final BookingService bookings;
     private final SeatReservationService reservations;
 
-    public TicketController(TicketService tickets, EventService events,
-                            BookingService bookings, SeatReservationService reservations) {
-        this.tickets = tickets;
-        this.events = events;
-        this.bookings = bookings;
-        this.reservations = reservations;
-    }
-
     @GetMapping("/tickets")
     @RequireRole(UserRole.CUSTOMER)
-    public List<TicketResponse> mine(@CurrentUser User customer) {
+    public List<TicketResponse> getMyTickets(@CurrentUser User customer) {
         return tickets.forCustomer(customer.getId());
     }
 

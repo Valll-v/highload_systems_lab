@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.booking;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,20 +24,13 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class BookingService {
 
     private final BookingRepository bookings;
     private final EventService events;
     private final SeatReservationService reservations;
     private final TicketService tickets;
-
-    public BookingService(BookingRepository bookings, EventService events,
-                          SeatReservationService reservations, TicketService tickets) {
-        this.bookings = bookings;
-        this.events = events;
-        this.reservations = reservations;
-        this.tickets = tickets;
-    }
 
     @Transactional
     public BookingResponse create(User customer, Long eventId, List<Long> seatIds) {

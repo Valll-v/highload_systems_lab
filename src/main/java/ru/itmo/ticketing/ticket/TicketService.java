@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.ticket;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,13 +15,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class TicketService {
 
     private final TicketRepository tickets;
-
-    public TicketService(TicketRepository tickets) {
-        this.tickets = tickets;
-    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public List<Ticket> issue(Booking booking, Event event, List<Seat> seats) {

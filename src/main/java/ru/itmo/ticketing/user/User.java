@@ -8,11 +8,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     @Id
@@ -22,50 +28,21 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(name = "full_name", nullable = false)
+    @Setter
+    @Column(nullable = false)
     private String fullName;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private UserRole role;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
-
-    protected User() {
-    }
 
     public User(String email, String fullName, UserRole role) {
         this.email = email;
         this.fullName = fullName;
         this.role = role;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
     }
 }

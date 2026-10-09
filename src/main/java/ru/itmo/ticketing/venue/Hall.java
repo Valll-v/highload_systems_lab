@@ -12,12 +12,17 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "halls")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hall {
 
     @Id
@@ -25,7 +30,7 @@ public class Hall {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "venue_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Venue venue;
 
     @Column(nullable = false)
@@ -35,28 +40,9 @@ public class Hall {
     @OrderBy("rowNo, seatNo")
     private List<Seat> seats = new ArrayList<>();
 
-    protected Hall() {
-    }
-
     Hall(Venue venue, String name) {
         this.venue = venue;
         this.name = name;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Venue getVenue() {
-        return venue;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public List<Seat> getSeats() {
-        return seats;
     }
 
     public void generateSeats(int rows, int seatsPerRow) {

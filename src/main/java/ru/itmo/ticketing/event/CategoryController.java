@@ -1,6 +1,7 @@
 package ru.itmo.ticketing.event;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,14 +20,11 @@ import ru.itmo.ticketing.user.UserRole;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/categories")
 public class CategoryController {
 
     private final CategoryService service;
-
-    public CategoryController(CategoryService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<CategoryResponse> list() {

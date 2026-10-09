@@ -1,6 +1,7 @@
 package ru.itmo.ticketing.event;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -29,16 +30,12 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/events")
 public class EventController {
 
     private final EventService service;
     private final UserRepository users;
-
-    public EventController(EventService service, UserRepository users) {
-        this.service = service;
-        this.users = users;
-    }
 
     @GetMapping
     public Page<EventResponse> search(@RequestParam(required = false) Long categoryId,
@@ -63,9 +60,9 @@ public class EventController {
         return service.seatMap(id);
     }
 
-    @GetMapping("/mine")
+    @GetMapping("/my")
     @RequireRole(UserRole.ORGANIZER)
-    public List<EventResponse> mine(@CurrentUser User organizer) {
+    public List<EventResponse> getMyEvents(@CurrentUser User organizer) {
         return service.listMine(organizer);
     }
 

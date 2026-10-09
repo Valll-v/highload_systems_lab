@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.event;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class EventService {
 
@@ -33,15 +35,6 @@ public class EventService {
     private final VenueService venues;
     private final SeatReservationService reservations;
     private final ApplicationEventPublisher publisher;
-
-    public EventService(EventRepository events, CategoryService categories, VenueService venues,
-                        SeatReservationService reservations, ApplicationEventPublisher publisher) {
-        this.events = events;
-        this.categories = categories;
-        this.venues = venues;
-        this.reservations = reservations;
-        this.publisher = publisher;
-    }
 
     public EventResponse create(User organizer, EventRequest request) {
         validateWindow(request);

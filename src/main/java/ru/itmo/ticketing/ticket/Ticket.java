@@ -11,6 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import ru.itmo.ticketing.booking.Booking;
 import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.venue.Seat;
@@ -20,6 +23,8 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "tickets")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Ticket {
 
     @Id
@@ -27,15 +32,15 @@ public class Ticket {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "booking_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Booking booking;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "event_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Event event;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "seat_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Seat seat;
 
     @Column(nullable = false, unique = true, length = 64)
@@ -48,11 +53,8 @@ public class Ticket {
     @Column(nullable = false, length = 32)
     private TicketStatus status;
 
-    @Column(name = "issued_at", nullable = false, insertable = false, updatable = false)
+    @Column(nullable = false, insertable = false, updatable = false)
     private OffsetDateTime issuedAt;
-
-    protected Ticket() {
-    }
 
     public Ticket(Booking booking, Event event, Seat seat, String code, BigDecimal price) {
         this.booking = booking;
@@ -61,38 +63,6 @@ public class Ticket {
         this.code = code;
         this.price = price;
         this.status = TicketStatus.VALID;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Booking getBooking() {
-        return booking;
-    }
-
-    public Event getEvent() {
-        return event;
-    }
-
-    public Seat getSeat() {
-        return seat;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public TicketStatus getStatus() {
-        return status;
-    }
-
-    public OffsetDateTime getIssuedAt() {
-        return issuedAt;
     }
 
     public void cancel() {

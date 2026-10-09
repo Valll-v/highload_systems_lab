@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.venue;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.NotFoundException;
@@ -12,18 +13,13 @@ import ru.itmo.ticketing.venue.dto.VenueResponse;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class VenueService {
 
     private final VenueRepository venues;
     private final HallRepository halls;
     private final SeatRepository seats;
-
-    public VenueService(VenueRepository venues, HallRepository halls, SeatRepository seats) {
-        this.venues = venues;
-        this.halls = halls;
-        this.seats = seats;
-    }
 
     public VenueResponse create(CreateVenueRequest request) {
         Venue venue = venues.save(new Venue(request.name().trim(), request.city().trim(), request.address().trim()));

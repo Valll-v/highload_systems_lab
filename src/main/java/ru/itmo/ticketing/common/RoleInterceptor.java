@@ -2,6 +2,7 @@ package ru.itmo.ticketing.common;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -11,13 +12,10 @@ import ru.itmo.ticketing.user.UserRole;
 import java.util.Arrays;
 
 @Component
+@RequiredArgsConstructor
 public class RoleInterceptor implements HandlerInterceptor {
 
     private final CurrentUserResolver resolver;
-
-    public RoleInterceptor(CurrentUserResolver resolver) {
-        this.resolver = resolver;
-    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {

@@ -1,5 +1,6 @@
 package ru.itmo.ticketing.user;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.ConflictException;
@@ -8,14 +9,11 @@ import ru.itmo.ticketing.common.NotFoundException;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class UserService {
 
     private final UserRepository users;
-
-    public UserService(UserRepository users) {
-        this.users = users;
-    }
 
     public User register(String email, String fullName, UserRole role) {
         String normalized = email.trim().toLowerCase();

@@ -1,6 +1,7 @@
 package ru.itmo.ticketing.common;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -11,16 +12,13 @@ import ru.itmo.ticketing.user.User;
 import ru.itmo.ticketing.user.UserRepository;
 
 @Component
+@RequiredArgsConstructor
 public class CurrentUserResolver implements HandlerMethodArgumentResolver {
 
     public static final String HEADER = "X-User-Id";
     static final String REQUEST_ATTRIBUTE = CurrentUserResolver.class.getName() + ".user";
 
     private final UserRepository users;
-
-    public CurrentUserResolver(UserRepository users) {
-        this.users = users;
-    }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {

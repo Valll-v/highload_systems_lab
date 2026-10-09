@@ -11,6 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.user.User;
 
@@ -19,6 +22,8 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "bookings")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Booking {
 
     @Id
@@ -26,62 +31,30 @@ public class Booking {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(nullable = false)
     private User customer;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "event_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Event event;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private BookingStatus status;
 
-    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "cancelled_at")
     private OffsetDateTime cancelledAt;
-
-    protected Booking() {
-    }
 
     public Booking(User customer, Event event, BigDecimal totalPrice) {
         this.customer = customer;
         this.event = event;
         this.totalPrice = totalPrice;
         this.status = BookingStatus.ACTIVE;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getCustomer() {
-        return customer;
-    }
-
-    public Event getEvent() {
-        return event;
-    }
-
-    public BookingStatus getStatus() {
-        return status;
-    }
-
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public OffsetDateTime getCancelledAt() {
-        return cancelledAt;
     }
 
     public boolean isActive() {

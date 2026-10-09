@@ -9,9 +9,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "seats")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Seat {
 
     @Id
@@ -19,37 +24,18 @@ public class Seat {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "hall_id", nullable = false)
+    @JoinColumn(nullable = false)
     private Hall hall;
 
-    @Column(name = "row_no", nullable = false)
+    @Column(nullable = false)
     private int rowNo;
 
-    @Column(name = "seat_no", nullable = false)
+    @Column(nullable = false)
     private int seatNo;
-
-    protected Seat() {
-    }
 
     Seat(Hall hall, int rowNo, int seatNo) {
         this.hall = hall;
         this.rowNo = rowNo;
         this.seatNo = seatNo;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Hall getHall() {
-        return hall;
-    }
-
-    public int getRowNo() {
-        return rowNo;
-    }
-
-    public int getSeatNo() {
-        return seatNo;
     }
 }

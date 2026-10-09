@@ -1,6 +1,7 @@
 package ru.itmo.ticketing.booking;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,14 +20,11 @@ import ru.itmo.ticketing.user.UserRole;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/bookings")
 public class BookingController {
 
     private final BookingService service;
-
-    public BookingController(BookingService service) {
-        this.service = service;
-    }
 
     @PostMapping
     @RequireRole(UserRole.CUSTOMER)
@@ -37,7 +35,7 @@ public class BookingController {
 
     @GetMapping
     @RequireRole(UserRole.CUSTOMER)
-    public List<BookingResponse> mine(@CurrentUser User customer) {
+    public List<BookingResponse> getMyBookings(@CurrentUser User customer) {
         return service.listForCustomer(customer);
     }
 
