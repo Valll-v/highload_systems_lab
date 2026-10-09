@@ -62,6 +62,7 @@ class BookingFlowApiTest extends IntegrationTestBase {
         List<Long> chosen = seats.subList(0, 2);
         var booking = expect(api.post(customer, "/api/bookings", Map.of("eventId", event, "seatIds", chosen)), 201);
         long bookingId = booking.id();
+        assertThat(booking.location()).endsWith("/api/bookings/" + bookingId);
         assertThat(booking.body().get("status").asText()).isEqualTo("ACTIVE");
         assertThat(booking.body().get("totalPrice").decimalValue()).isEqualByComparingTo("3000.00");
         assertThat(booking.body().get("tickets")).hasSize(2);
@@ -124,6 +125,7 @@ class BookingFlowApiTest extends IntegrationTestBase {
     void eventLifecycle() throws Exception {
         var created = expect(api.post(organizer, "/api/events", api.eventBody(category, hall, "Draft")), 201);
         long id = created.id();
+        assertThat(created.location()).endsWith("/api/events/" + id);
         assertThat(created.body().get("status").asText()).isEqualTo("DRAFT");
 
         assertThat(api.get(customer, "/api/events/" + id).status()).isEqualTo(404);

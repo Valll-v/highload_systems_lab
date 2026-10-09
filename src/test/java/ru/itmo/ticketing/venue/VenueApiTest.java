@@ -11,8 +11,10 @@ import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +56,7 @@ class VenueApiTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Main\",\"rows\":5,\"seatsPerRow\":10}"))
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(".*/api/halls/\\d+")))
                 .andExpect(jsonPath("$.capacity").value(50))
                 .andReturn().getResponse().getContentAsString();
         long hallId = Long.parseLong(hall.replaceAll(".*\"id\":(\\d+).*", "$1"));

@@ -7,9 +7,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +29,7 @@ class UserApiTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"ivan@test.ru\",\"fullName\":\"Ivan\"}"))
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Location", matchesPattern(".*/api/users/\\d+")))
                 .andExpect(jsonPath("$.role").value("CUSTOMER"));
 
         Long id = users.findByEmailIgnoreCase("ivan@test.ru").orElseThrow().getId();

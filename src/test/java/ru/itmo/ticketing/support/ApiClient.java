@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ApiClient {
 
-    public record Response(int status, JsonNode body) {
+    public record Response(int status, JsonNode body, String location) {
         public long id() {
             return body.get("id").asLong();
         }
@@ -63,7 +63,7 @@ public class ApiClient {
         MvcResult result = mvc.perform(builder).andReturn();
         String content = result.getResponse().getContentAsString();
         JsonNode node = content.isBlank() ? json.nullNode() : json.readTree(content);
-        return new Response(result.getResponse().getStatus(), node);
+        return new Response(result.getResponse().getStatus(), node, result.getResponse().getHeader("Location"));
     }
 
     public long user(String email, String role) throws Exception {

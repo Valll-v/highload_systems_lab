@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.itmo.ticketing.common.CurrentUser;
 import ru.itmo.ticketing.common.RequireRole;
 import ru.itmo.ticketing.event.dto.EventRequest;
@@ -26,6 +26,7 @@ import ru.itmo.ticketing.user.User;
 import ru.itmo.ticketing.user.UserRepository;
 import ru.itmo.ticketing.user.UserRole;
 
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -68,9 +69,10 @@ public class EventController {
 
     @PostMapping
     @RequireRole(UserRole.ORGANIZER)
-    @ResponseStatus(HttpStatus.CREATED)
-    public EventResponse create(@CurrentUser User organizer, @Valid @RequestBody EventRequest request) {
-        return service.create(organizer, request);
+    public ResponseEntity<EventResponse> create(@CurrentUser User organizer, @Valid @RequestBody EventRequest request) {
+        EventResponse event = service.create(organizer, request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(event.id()).toUri();
+        return ResponseEntity.created(location).body(event);
     }
 
     @PutMapping("/{id}")
