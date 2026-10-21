@@ -2,23 +2,26 @@ package ru.itmo.ticketing.booking;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.itmo.ticketing.booking.dto.BookingResponse;
 import ru.itmo.ticketing.booking.dto.CreateBookingRequest;
 import ru.itmo.ticketing.common.CurrentUser;
+import ru.itmo.ticketing.common.PageResponse;
+import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
 import ru.itmo.ticketing.user.User;
 import ru.itmo.ticketing.user.UserRole;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,8 +40,11 @@ public class BookingController {
 
     @GetMapping
     @RequireRole(UserRole.CUSTOMER)
-    public ResponseEntity<List<BookingResponse>> getMyBookings(@CurrentUser User customer) {
-        return ResponseEntity.ok(service.listForCustomer(customer));
+    public ResponseEntity<PageResponse<BookingResponse>> getMyBookings(@CurrentUser User customer,
+                                                                       @RequestParam(defaultValue = "0") int page,
+                                                                       @RequestParam(defaultValue = "20") int size) {
+        var pageable = Paging.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
+        return Paging.withTotal(service.listForCustomer(customer, pageable));
     }
 
     @GetMapping("/{id}")

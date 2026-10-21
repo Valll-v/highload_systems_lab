@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,9 +28,11 @@ public class Seat {
     @JoinColumn(nullable = false)
     private Hall hall;
 
+    @Min(1)
     @Column(nullable = false)
     private int rowNo;
 
+    @Min(1)
     @Column(nullable = false)
     private int seatNo;
 

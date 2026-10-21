@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import ru.itmo.ticketing.support.RepositoryTestBase;
 import ru.itmo.ticketing.venue.Hall;
 import ru.itmo.ticketing.venue.Seat;
@@ -34,7 +36,7 @@ class VenueRepositoryTest extends RepositoryTestBase {
 
         Venue loaded = venues.findById(venue.getId()).orElseThrow();
         Hall hall = loaded.getHalls().get(0);
-        List<Seat> hallSeats = seats.findAllByHallIdOrderByRowNoAscSeatNoAsc(hall.getId());
+        List<Seat> hallSeats = seats.findAllByHallId(hall.getId(), PageRequest.of(0, 50, Sort.by("rowNo", "seatNo"))).getContent();
 
         assertThat(hallSeats).hasSize(12);
         assertThat(hallSeats.get(0).getRowNo()).isEqualTo(1);
@@ -52,7 +54,7 @@ class VenueRepositoryTest extends RepositoryTestBase {
         venues.deleteById(venue.getId());
         venues.flush();
 
-        assertThat(seats.findAllByHallIdOrderByRowNoAscSeatNoAsc(hallId)).isEmpty();
+        assertThat(seats.findAllByHallId(hallId, PageRequest.of(0, 50)).getContent()).isEmpty();
         assertThat(em.getEntityManager()
                 .createQuery("select count(h) from Hall h where h.id = :id", Long.class)
                 .setParameter("id", hallId).getSingleResult()).isZero();

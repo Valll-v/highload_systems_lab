@@ -2,12 +2,12 @@ package ru.itmo.ticketing.event;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
@@ -22,15 +22,15 @@ public interface EventRepository extends JpaRepository<Event, Long> {
               and (cast(:from as timestamp) is null or e.startsAt >= :from)
               and (cast(:to as timestamp) is null or e.startsAt <= :to)
             """)
-    Page<Event> findPublished(@Param("categoryId") Long categoryId,
-                              @Param("city") String city,
-                              @Param("from") OffsetDateTime from,
-                              @Param("to") OffsetDateTime to,
-                              Pageable pageable);
+    Slice<Event> findPublished(@Param("categoryId") Long categoryId,
+                               @Param("city") String city,
+                               @Param("from") OffsetDateTime from,
+                               @Param("to") OffsetDateTime to,
+                               Pageable pageable);
 
-    List<Event> findAllByOrganizerIdOrderByStartsAtDesc(Long organizerId);
+    Page<Event> findAllByOrganizerId(Long organizerId, Pageable pageable);
 
-    List<Event> findAllByStatusOrderByCreatedAtAsc(EventStatus status);
+    Page<Event> findAllByStatus(EventStatus status, Pageable pageable);
 
     @Query("""
             select count(e) > 0 from Event e

@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-tags
+      author: valerii
+      changes:
+        - createTable:
+            tableName: tags
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: name, type: varchar(64), constraints: { nullable: false, unique: true, uniqueConstraintName: uk_tags_name } }
+  - changeSet:
+      id: 005-create-event-tags
+      author: valerii
+      changes:
+        - createTable:
+            tableName: event_tags
+            columns:
+              - column: { name: event_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_event_tags_event, references: events(id), deleteCascade: true } }
+              - column: { name: tag_id, type: bigint, constraints: { nullable: false, foreignKeyName: fk_event_tags_tag, references: tags(id), deleteCascade: true } }
+        - addPrimaryKey:
+            tableName: event_tags
+            columnNames: event_id, tag_id
+            constraintName: pk_event_tags
+        - createIndex:
+            tableName: event_tags
+            indexName: ix_event_tags_tag
+            columns:
+              - column: { name: tag_id }

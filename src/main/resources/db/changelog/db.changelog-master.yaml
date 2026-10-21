@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/003-events.yaml
   - include:
       file: db/changelog/004-bookings.yaml
+  - include:
+      file: db/changelog/005-tags.yaml

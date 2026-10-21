@@ -84,9 +84,9 @@ public class ApiClient {
     }
 
     public List<Long> seats(long hallId) throws Exception {
-        Response r = expect(get(null, "/api/halls/" + hallId + "/seats"), 200);
+        Response r = expect(get(null, "/api/halls/" + hallId + "/seats?size=50"), 200);
         List<Long> ids = new ArrayList<>();
-        r.body().forEach(n -> ids.add(n.get("id").asLong()));
+        r.body().get("content").forEach(n -> ids.add(n.get("id").asLong()));
         return ids;
     }
 

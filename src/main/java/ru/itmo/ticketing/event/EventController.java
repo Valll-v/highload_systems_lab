@@ -2,8 +2,6 @@ package ru.itmo.ticketing.event;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.itmo.ticketing.common.CurrentUser;
+import ru.itmo.ticketing.common.PageResponse;
+import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
+import ru.itmo.ticketing.common.SliceResponse;
 import ru.itmo.ticketing.event.dto.EventRequest;
 import ru.itmo.ticketing.event.dto.EventResponse;
 import ru.itmo.ticketing.event.dto.EventSeatResponse;
@@ -28,7 +29,6 @@ import ru.itmo.ticketing.user.UserRole;
 
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,14 +39,14 @@ public class EventController {
     private final UserRepository users;
 
     @GetMapping
-    public ResponseEntity<Page<EventResponse>> search(@RequestParam(required = false) Long categoryId,
+    public ResponseEntity<SliceResponse<EventResponse>> search(@RequestParam(required = false) Long categoryId,
                                       @RequestParam(required = false) String city,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
                                       @RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "20") int size) {
-        var pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startsAt"));
-        return ResponseEntity.ok(service.search(categoryId, city, from, to, pageable));
+        var pageable = Paging.of(page, size, Sort.by("startsAt", "id"));
+        return ResponseEntity.ok(SliceResponse.from(service.search(categoryId, city, from, to, pageable)));
     }
 
     @GetMapping("/{id}")
@@ -57,14 +57,20 @@ public class EventController {
     }
 
     @GetMapping("/{id}/seats")
-    public ResponseEntity<List<EventSeatResponse>> seats(@PathVariable Long id) {
-        return ResponseEntity.ok(service.seatMap(id));
+    public ResponseEntity<SliceResponse<EventSeatResponse>> seats(@PathVariable Long id,
+                                                                  @RequestParam(defaultValue = "0") int page,
+                                                                  @RequestParam(defaultValue = "50") int size) {
+        var pageable = Paging.of(page, size, Sort.by("rowNo", "seatNo"));
+        return ResponseEntity.ok(SliceResponse.from(service.seatMap(id, pageable)));
     }
 
     @GetMapping("/my")
     @RequireRole(UserRole.ORGANIZER)
-    public ResponseEntity<List<EventResponse>> getMyEvents(@CurrentUser User organizer) {
-        return ResponseEntity.ok(service.listMine(organizer));
+    public ResponseEntity<PageResponse<EventResponse>> getMyEvents(@CurrentUser User organizer,
+                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                   @RequestParam(defaultValue = "20") int size) {
+        var pageable = Paging.of(page, size, Sort.by(Sort.Direction.DESC, "startsAt"));
+        return Paging.withTotal(service.listMine(organizer, pageable));
     }
 
     @PostMapping
@@ -95,8 +101,9 @@ public class EventController {
 
     @GetMapping("/moderation")
     @RequireRole(UserRole.ADMIN)
-    public ResponseEntity<List<EventResponse>> moderationQueue() {
-        return ResponseEntity.ok(service.listPendingModeration());
+    public ResponseEntity<PageResponse<EventResponse>> moderationQueue(@RequestParam(defaultValue = "0") int page,
+                                                                       @RequestParam(defaultValue = "20") int size) {
+        return Paging.withTotal(service.listPendingModeration(Paging.of(page, size, Sort.by("createdAt", "id"))));
     }
 
     @PostMapping("/{id}/publish")

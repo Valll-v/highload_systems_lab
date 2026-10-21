@@ -84,3 +84,47 @@ X-User-Id: 2
 ### Cancel booking
 POST http://localhost:8080/api/bookings/1/cancel
 X-User-Id: 3
+
+### Swagger UI
+GET http://localhost:8080/swagger-ui.html
+
+### OpenAPI spec
+GET http://localhost:8080/v3/api-docs
+
+### Create tag (admin)
+POST http://localhost:8080/api/tags
+X-User-Id: 1
+Content-Type: application/json
+
+{"name": "Rock"}
+
+### Tags, page with total count in X-Total-Count
+GET http://localhost:8080/api/tags?page=0&size=20
+
+### Event with tags (organizer)
+POST http://localhost:8080/api/events
+X-User-Id: 2
+Content-Type: application/json
+
+{
+  "title": "Rock night 2",
+  "categoryId": 1,
+  "hallId": 1,
+  "startsAt": "2026-12-02T19:00:00+03:00",
+  "endsAt": "2026-12-02T22:00:00+03:00",
+  "price": 1200.00,
+  "tagIds": [1]
+}
+
+### Catalogue, infinite scroll (hasNext, no total)
+GET http://localhost:8080/api/events?page=0&size=20
+
+### Seat map, second page of 20
+GET http://localhost:8080/api/events/1/seats?page=1&size=20
+
+### Size above 50 is capped
+GET http://localhost:8080/api/halls/1/seats?size=500
+
+### Users, page with X-Total-Count (admin)
+GET http://localhost:8080/api/users?page=0&size=10
+X-User-Id: 1

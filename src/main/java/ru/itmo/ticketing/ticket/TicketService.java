@@ -1,6 +1,8 @@
 package ru.itmo.ticketing.ticket;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,9 +42,8 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public List<TicketResponse> forCustomer(Long customerId) {
-        return tickets.findAllByBookingCustomerIdOrderByIdDesc(customerId).stream()
-                .map(TicketResponse::from).toList();
+    public Page<TicketResponse> forCustomer(Long customerId, Pageable pageable) {
+        return tickets.findAllByBookingCustomerId(customerId, pageable).map(TicketResponse::from);
     }
 
     @Transactional(readOnly = true)

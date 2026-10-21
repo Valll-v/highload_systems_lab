@@ -11,6 +11,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,12 +47,17 @@ public class Ticket {
     @JoinColumn(nullable = false)
     private Seat seat;
 
+    @NotBlank
+    @Size(max = 64)
     @Column(nullable = false, unique = true, length = 64)
     private String code;
 
+    @NotNull
+    @DecimalMin("0.00")
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private TicketStatus status;

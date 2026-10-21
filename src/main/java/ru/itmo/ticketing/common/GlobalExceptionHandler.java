@@ -1,9 +1,11 @@
 package ru.itmo.ticketing.common;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,6 +50,23 @@ public class GlobalExceptionHandler {
                 .toList();
         ErrorResponse body = new ErrorResponse(400, "Bad Request", "Validation failed", fields, OffsetDateTime.now());
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> entityValidation(ConstraintViolationException e) {
+        List<ErrorResponse.FieldError> fields = e.getConstraintViolations().stream()
+                .map(v -> new ErrorResponse.FieldError(v.getPropertyPath().toString(), v.getMessage()))
+                .toList();
+        ErrorResponse body = new ErrorResponse(400, "Bad Request", "Validation failed", fields, OffsetDateTime.now());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ErrorResponse> transaction(TransactionSystemException e) {
+        if (e.getRootCause() instanceof ConstraintViolationException violation) {
+            return entityValidation(violation);
+        }
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Transaction failed");
     }
 
     @ExceptionHandler({

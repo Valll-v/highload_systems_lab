@@ -5,6 +5,7 @@ import ru.itmo.ticketing.event.EventStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record EventResponse(
         Long id,
@@ -21,7 +22,8 @@ public record EventResponse(
         OffsetDateTime startsAt,
         OffsetDateTime endsAt,
         BigDecimal price,
-        EventStatus status
+        EventStatus status,
+        List<TagResponse> tags
 ) {
     public static EventResponse from(Event e) {
         var hall = e.getHall();
@@ -32,6 +34,7 @@ public record EventResponse(
                 e.getOrganizer().getId(),
                 hall.getId(), hall.getName(),
                 venue.getId(), venue.getName(), venue.getCity(),
-                e.getStartsAt(), e.getEndsAt(), e.getPrice(), e.getStatus());
+                e.getStartsAt(), e.getEndsAt(), e.getPrice(), e.getStatus(),
+                e.getTags().stream().map(TagResponse::from).toList());
     }
 }

@@ -2,6 +2,8 @@ package ru.itmo.ticketing.booking;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.booking.dto.BookingResponse;
@@ -73,9 +75,8 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> listForCustomer(User customer) {
-        return bookings.findAllByCustomerIdOrderByCreatedAtDesc(customer.getId()).stream()
-                .map(this::toResponse).toList();
+    public Page<BookingResponse> listForCustomer(User customer, Pageable pageable) {
+        return bookings.findAllByCustomerId(customer.getId(), pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)

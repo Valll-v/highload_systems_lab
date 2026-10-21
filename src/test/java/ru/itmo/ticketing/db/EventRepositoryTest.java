@@ -4,12 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import ru.itmo.ticketing.event.Category;
 import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.event.EventRepository;
 import ru.itmo.ticketing.event.EventStatus;
+import ru.itmo.ticketing.event.Tag;
 import ru.itmo.ticketing.support.RepositoryTestBase;
 import ru.itmo.ticketing.user.User;
 import ru.itmo.ticketing.user.UserRole;
@@ -17,6 +18,7 @@ import ru.itmo.ticketing.venue.Hall;
 import ru.itmo.ticketing.venue.Venue;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,15 +80,37 @@ class EventRepositoryTest extends RepositoryTestBase {
         em.persist(TestData.event(otherCategory, organizer, hall, start.plusDays(2), EventStatus.PUBLISHED));
         em.flush();
 
-        Page<Event> all = events.findPublished(null, null, null, null, PageRequest.of(0, 50));
+        Slice<Event> all = events.findPublished(null, null, null, null, PageRequest.of(0, 50));
         assertThat(all.getContent()).extracting(Event::getStatus).containsOnly(EventStatus.PUBLISHED);
 
-        Page<Event> byCategory = events.findPublished(category.getId(), "tomsk", null, null, PageRequest.of(0, 50));
+        Slice<Event> byCategory = events.findPublished(category.getId(), "tomsk", null, null, PageRequest.of(0, 50));
         assertThat(byCategory.getContent()).extracting(Event::getId).containsExactly(published.getId());
 
-        Page<Event> byDate = events.findPublished(null, null, start.plusDays(1), null, PageRequest.of(0, 50));
+        Slice<Event> byDate = events.findPublished(null, null, start.plusDays(1), null, PageRequest.of(0, 50));
         assertThat(byDate.getContent()).extracting(Event::getId).doesNotContain(published.getId());
 
-        assertThat(events.findPublished(null, "nowhere", null, null, PageRequest.of(0, 50))).isEmpty();
+        assertThat(events.findPublished(null, "nowhere", null, null, PageRequest.of(0, 50)).getContent()).isEmpty();
+
+        Slice<Event> firstOfTwo = events.findPublished(null, null, null, null, PageRequest.of(0, 1));
+        assertThat(firstOfTwo.getContent()).hasSize(1);
+        assertThat(firstOfTwo.hasNext()).isTrue();
+    }
+
+    @Test
+    void eventKeepsTagsThroughJoinTable() {
+        Tag rock = em.persist(new Tag("rock " + published.getId()));
+        Tag live = em.persist(new Tag("live " + published.getId()));
+        published.setTags(List.of(rock, live));
+        em.flush();
+        em.clear();
+
+        Event reloaded = events.findById(published.getId()).orElseThrow();
+        assertThat(reloaded.getTags()).extracting(Tag::getName).containsExactly(live.getName(), rock.getName());
+
+        Event other = em.persistAndFlush(TestData.event(category, organizer, hall, start.plusDays(3), EventStatus.DRAFT));
+        other.setTags(List.of(em.find(Tag.class, rock.getId())));
+        em.flush();
+        em.clear();
+        assertThat(events.findById(other.getId()).orElseThrow().getTags()).extracting(Tag::getId).containsExactly(rock.getId());
     }
 }

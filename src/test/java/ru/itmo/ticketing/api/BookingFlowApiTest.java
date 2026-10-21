@@ -56,7 +56,9 @@ class BookingFlowApiTest extends IntegrationTestBase {
         assertThat(catalogue.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(event);
         var unfiltered = expect(api.get(null, "/api/events"), 200);
         assertThat(unfiltered.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(event);
-        var seatMap = expect(api.get(null, "/api/events/" + event + "/seats"), 200);
+        var seatMap = expect(api.get(null, "/api/events/" + event + "/seats?size=50"), 200);
+        assertThat(seatMap.body().get("content")).hasSize(50);
+        assertThat(seatMap.body().get("hasNext").asBoolean()).isFalse();
         assertThat(seatMap.body().findValues("available")).allMatch(n -> n.asBoolean());
 
         List<Long> chosen = seats.subList(0, 2);
@@ -67,7 +69,7 @@ class BookingFlowApiTest extends IntegrationTestBase {
         assertThat(booking.body().get("totalPrice").decimalValue()).isEqualByComparingTo("3000.00");
         assertThat(booking.body().get("tickets")).hasSize(2);
 
-        seatMap = expect(api.get(null, "/api/events/" + event + "/seats"), 200);
+        seatMap = expect(api.get(null, "/api/events/" + event + "/seats?size=50"), 200);
         long taken = seatMap.body().findValues("available").stream().filter(n -> !n.asBoolean()).count();
         assertThat(taken).isEqualTo(2);
 
@@ -81,13 +83,17 @@ class BookingFlowApiTest extends IntegrationTestBase {
         assertThat(sales.body().get("revenue").decimalValue()).isEqualByComparingTo("3000.00");
 
         var tickets = expect(api.get(customer, "/api/tickets"), 200);
-        assertThat(tickets.body()).hasSize(2);
-        assertThat(tickets.body().get(0).get("code").asText()).startsWith("TKT-");
+        assertThat(tickets.body().get("content")).hasSize(2);
+        assertThat(tickets.body().get("totalElements").asLong()).isEqualTo(2);
+        assertThat(tickets.body().get("content").get(0).get("code").asText()).startsWith("TKT-");
+
+        var myBookings = expect(api.get(customer, "/api/bookings"), 200);
+        assertThat(myBookings.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(bookingId);
 
         var cancelled = expect(api.post(customer, "/api/bookings/" + bookingId + "/cancel", null), 200);
         assertThat(cancelled.body().get("status").asText()).isEqualTo("CANCELLED");
         assertThat(cancelled.body().get("tickets").findValues("status")).allMatch(n -> n.asText().equals("CANCELLED"));
-        seatMap = expect(api.get(null, "/api/events/" + event + "/seats"), 200);
+        seatMap = expect(api.get(null, "/api/events/" + event + "/seats?size=50"), 200);
         assertThat(seatMap.body().findValues("available")).allMatch(n -> n.asBoolean());
         assertThat(api.post(customer, "/api/bookings/" + bookingId + "/cancel", null).status()).isEqualTo(409);
 
@@ -134,7 +140,9 @@ class BookingFlowApiTest extends IntegrationTestBase {
 
         expect(api.post(organizer, "/api/events/" + id + "/submit", null), 200);
         var queue = expect(api.get(admin, "/api/events/moderation"), 200);
-        assertThat(queue.body().findValues("id")).extracting(n -> n.asLong()).contains(id);
+        assertThat(queue.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(id);
+        var mine = expect(api.get(organizer, "/api/events/my"), 200);
+        assertThat(mine.body().get("content").findValues("id")).extracting(n -> n.asLong()).contains(id);
 
         expect(api.post(admin, "/api/events/" + id + "/reject", null), 200);
         expect(api.put(organizer, "/api/events/" + id, api.eventBody(category, hall, "Draft v2")), 200);

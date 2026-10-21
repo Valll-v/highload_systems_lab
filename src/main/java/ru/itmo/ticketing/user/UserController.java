@@ -10,16 +10,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import ru.itmo.ticketing.common.CurrentUser;
+import ru.itmo.ticketing.common.PageResponse;
+import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
 import ru.itmo.ticketing.user.dto.CreateUserRequest;
 import ru.itmo.ticketing.user.dto.UpdateRoleRequest;
 import ru.itmo.ticketing.user.dto.UserResponse;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,8 +44,9 @@ public class UserController {
 
     @GetMapping
     @RequireRole(UserRole.ADMIN)
-    public ResponseEntity<List<UserResponse>> list() {
-        return ResponseEntity.ok(service.list().stream().map(UserResponse::from).toList());
+    public ResponseEntity<PageResponse<UserResponse>> list(@RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "20") int size) {
+        return Paging.withTotal(service.list(Paging.of(page, size)).map(UserResponse::from));
     }
 
     @GetMapping("/{id}")

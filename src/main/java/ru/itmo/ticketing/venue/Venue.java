@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,14 +30,20 @@ public class Venue {
     private Long id;
 
     @Setter
+    @NotBlank
+    @Size(max = 255)
     @Column(nullable = false)
     private String name;
 
     @Setter
+    @NotBlank
+    @Size(max = 128)
     @Column(nullable = false, length = 128)
     private String city;
 
     @Setter
+    @NotBlank
+    @Size(max = 512)
     @Column(nullable = false, length = 512)
     private String address;
 

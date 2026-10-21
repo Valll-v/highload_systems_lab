@@ -2,6 +2,7 @@ package ru.itmo.ticketing.event;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,15 +11,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import ru.itmo.ticketing.common.PageResponse;
+import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
 import ru.itmo.ticketing.event.dto.CategoryRequest;
 import ru.itmo.ticketing.event.dto.CategoryResponse;
 import ru.itmo.ticketing.user.UserRole;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,8 +31,14 @@ public class CategoryController {
     private final CategoryService service;
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> list() {
-        return ResponseEntity.ok(service.list().stream().map(CategoryResponse::from).toList());
+    public ResponseEntity<PageResponse<CategoryResponse>> list(@RequestParam(defaultValue = "0") int page,
+                                                               @RequestParam(defaultValue = "20") int size) {
+        return Paging.withTotal(service.list(Paging.of(page, size, Sort.by("name"))).map(CategoryResponse::from));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponse> get(@PathVariable Long id) {
+        return ResponseEntity.ok(CategoryResponse.from(service.get(id)));
     }
 
     @PostMapping

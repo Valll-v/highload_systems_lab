@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.ConflictException;
@@ -20,7 +21,6 @@ import ru.itmo.ticketing.venue.VenueService;
 
 import java.time.OffsetDateTime;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,6 +32,7 @@ public class EventService {
 
     private final EventRepository events;
     private final CategoryService categories;
+    private final TagService tags;
     private final VenueService venues;
     private final SeatReservationService reservations;
     private final ApplicationEventPublisher publisher;
@@ -42,6 +43,7 @@ public class EventService {
                 request.title().trim(), request.description(),
                 categories.get(request.categoryId()), organizer, venues.getHall(request.hallId()),
                 request.startsAt(), request.endsAt(), request.price());
+        event.setTags(tags.getAll(request.tagIds()));
         return EventResponse.from(events.save(event));
     }
 
@@ -59,6 +61,7 @@ public class EventService {
         event.setStartsAt(request.startsAt());
         event.setEndsAt(request.endsAt());
         event.setPrice(request.price());
+        event.setTags(tags.getAll(request.tagIds()));
         return EventResponse.from(event);
     }
 
@@ -80,9 +83,8 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventResponse> listMine(User organizer) {
-        return events.findAllByOrganizerIdOrderByStartsAtDesc(organizer.getId()).stream()
-                .map(EventResponse::from).toList();
+    public Page<EventResponse> listMine(User organizer, Pageable pageable) {
+        return events.findAllByOrganizerId(organizer.getId(), pageable).map(EventResponse::from);
     }
 
     public EventResponse publish(Long id) {
@@ -101,13 +103,12 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventResponse> listPendingModeration() {
-        return events.findAllByStatusOrderByCreatedAtAsc(EventStatus.PENDING_MODERATION).stream()
-                .map(EventResponse::from).toList();
+    public Page<EventResponse> listPendingModeration(Pageable pageable) {
+        return events.findAllByStatus(EventStatus.PENDING_MODERATION, pageable).map(EventResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public Page<EventResponse> search(Long categoryId, String city, OffsetDateTime from, OffsetDateTime to, Pageable pageable) {
+    public Slice<EventResponse> search(Long categoryId, String city, OffsetDateTime from, OffsetDateTime to, Pageable pageable) {
         String normalizedCity = city == null || city.isBlank() ? null : city.trim().toLowerCase();
         return events.findPublished(categoryId, normalizedCity, from, to, pageable).map(EventResponse::from);
     }
@@ -130,12 +131,11 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventSeatResponse> seatMap(Long id) {
+    public Slice<EventSeatResponse> seatMap(Long id, Pageable pageable) {
         Event event = get(id);
         Set<Long> taken = reservations.reservedSeatIds(id);
-        return venues.listSeats(event.getHall().getId()).stream()
-                .map(s -> new EventSeatResponse(s.getId(), s.getRowNo(), s.getSeatNo(), !taken.contains(s.getId())))
-                .toList();
+        return venues.listSeats(event.getHall().getId(), pageable)
+                .map(s -> new EventSeatResponse(s.getId(), s.getRowNo(), s.getSeatNo(), !taken.contains(s.getId())));
     }
 
     @Transactional(readOnly = true)

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 public record EventRequest(
         @NotBlank @Size(max = 255) String title,
@@ -16,6 +17,7 @@ public record EventRequest(
         @NotNull Long hallId,
         @NotNull OffsetDateTime startsAt,
         @NotNull OffsetDateTime endsAt,
-        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal price
+        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal price,
+        @Size(max = 10) Set<Long> tagIds
 ) {
 }

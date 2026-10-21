@@ -22,7 +22,7 @@ class SchemaMigrationTest extends IntegrationTestBase {
 
         assertThat(tables).contains(
                 "users", "categories", "venues", "halls", "seats",
-                "events", "bookings", "seat_reservations", "tickets");
+                "events", "bookings", "seat_reservations", "tickets", "tags", "event_tags");
     }
 
     @Test

@@ -61,13 +61,19 @@ class VenueApiTest extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
         long hallId = Long.parseLong(hall.replaceAll(".*\"id\":(\\d+).*", "$1"));
 
-        mvc.perform(get("/api/halls/" + hallId + "/seats"))
+        mvc.perform(get("/api/halls/" + hallId + "/seats?size=50"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(50)))
-                .andExpect(jsonPath("$[0].row").value(1))
-                .andExpect(jsonPath("$[0].number").value(1))
-                .andExpect(jsonPath("$[49].row").value(5))
-                .andExpect(jsonPath("$[49].number").value(10));
+                .andExpect(jsonPath("$.content", hasSize(50)))
+                .andExpect(jsonPath("$.hasNext").value(false))
+                .andExpect(jsonPath("$.content[0].row").value(1))
+                .andExpect(jsonPath("$.content[0].number").value(1))
+                .andExpect(jsonPath("$.content[49].row").value(5))
+                .andExpect(jsonPath("$.content[49].number").value(10));
+
+        mvc.perform(get("/api/venues?size=5"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("X-Total-Count"))
+                .andExpect(jsonPath("$.size").value(5));
 
         mvc.perform(get("/api/venues/" + venueId))
                 .andExpect(status().isOk())

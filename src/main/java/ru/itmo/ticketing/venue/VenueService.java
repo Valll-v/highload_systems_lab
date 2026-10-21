@@ -1,16 +1,16 @@
 package ru.itmo.ticketing.venue;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.NotFoundException;
 import ru.itmo.ticketing.venue.dto.CreateHallRequest;
 import ru.itmo.ticketing.venue.dto.CreateVenueRequest;
 import ru.itmo.ticketing.venue.dto.HallResponse;
-import ru.itmo.ticketing.venue.dto.SeatResponse;
 import ru.itmo.ticketing.venue.dto.VenueResponse;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,8 +40,8 @@ public class VenueService {
     }
 
     @Transactional(readOnly = true)
-    public List<VenueResponse> listVenues() {
-        return venues.findAll().stream().map(VenueResponse::from).toList();
+    public Page<VenueResponse> listVenues(Pageable pageable) {
+        return venues.findAll(pageable).map(VenueResponse::from);
     }
 
     public void deleteVenue(Long id) {
@@ -62,11 +62,6 @@ public class VenueService {
     }
 
     @Transactional(readOnly = true)
-    public List<SeatResponse> listSeatResponses(Long hallId) {
-        return listSeats(hallId).stream().map(SeatResponse::from).toList();
-    }
-
-    @Transactional(readOnly = true)
     public Venue getVenue(Long id) {
         return venues.findById(id).orElseThrow(() -> new NotFoundException("Venue", id));
     }
@@ -77,8 +72,8 @@ public class VenueService {
     }
 
     @Transactional(readOnly = true)
-    public List<Seat> listSeats(Long hallId) {
+    public Slice<Seat> listSeats(Long hallId, Pageable pageable) {
         getHall(hallId);
-        return seats.findAllByHallIdOrderByRowNoAscSeatNoAsc(hallId);
+        return seats.findAllByHallId(hallId, pageable);
     }
 }

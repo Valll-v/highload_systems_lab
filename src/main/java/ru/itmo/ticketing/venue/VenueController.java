@@ -2,6 +2,7 @@ package ru.itmo.ticketing.venue;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +11,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import ru.itmo.ticketing.common.PageResponse;
+import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
+import ru.itmo.ticketing.common.SliceResponse;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.dto.CreateHallRequest;
 import ru.itmo.ticketing.venue.dto.CreateVenueRequest;
@@ -21,7 +26,6 @@ import ru.itmo.ticketing.venue.dto.SeatResponse;
 import ru.itmo.ticketing.venue.dto.VenueResponse;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,8 +35,9 @@ public class VenueController {
     private final VenueService service;
 
     @GetMapping("/venues")
-    public ResponseEntity<List<VenueResponse>> list() {
-        return ResponseEntity.ok(service.listVenues());
+    public ResponseEntity<PageResponse<VenueResponse>> list(@RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "20") int size) {
+        return Paging.withTotal(service.listVenues(Paging.of(page, size, Sort.by("name", "id"))));
     }
 
     @GetMapping("/venues/{id}")
@@ -75,7 +80,10 @@ public class VenueController {
     }
 
     @GetMapping("/halls/{id}/seats")
-    public ResponseEntity<List<SeatResponse>> seats(@PathVariable Long id) {
-        return ResponseEntity.ok(service.listSeatResponses(id));
+    public ResponseEntity<SliceResponse<SeatResponse>> seats(@PathVariable Long id,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "50") int size) {
+        var pageable = Paging.of(page, size, Sort.by("rowNo", "seatNo"));
+        return ResponseEntity.ok(SliceResponse.from(service.listSeats(id, pageable).map(SeatResponse::from)));
     }
 }

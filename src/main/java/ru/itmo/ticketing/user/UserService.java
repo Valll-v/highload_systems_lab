@@ -1,12 +1,12 @@
 package ru.itmo.ticketing.user;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.ConflictException;
 import ru.itmo.ticketing.common.NotFoundException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +29,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<User> list() {
-        return users.findAll();
+    public Page<User> list(Pageable pageable) {
+        return users.findAll(pageable);
     }
 
     public User changeRole(Long id, UserRole role) {

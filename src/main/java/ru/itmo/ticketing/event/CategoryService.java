@@ -1,12 +1,12 @@
 package ru.itmo.ticketing.event;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.itmo.ticketing.common.ConflictException;
 import ru.itmo.ticketing.common.NotFoundException;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +35,8 @@ public class CategoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<Category> list() {
-        return categories.findAll();
+    public Page<Category> list(Pageable pageable) {
+        return categories.findAll(pageable);
     }
 
     public void delete(Long id) {

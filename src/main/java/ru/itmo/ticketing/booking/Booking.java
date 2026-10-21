@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,10 +40,13 @@ public class Booking {
     @JoinColumn(nullable = false)
     private Event event;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private BookingStatus status;
 
+    @NotNull
+    @DecimalMin("0.00")
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 
