@@ -1,6 +1,17 @@
 # Платформа бронирования билетов
 
-Spring Boot 3, Java 21, PostgreSQL, Liquibase.
+Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase.
+
+## Модули
+
+| Модуль             | Порт | Что делает                                                    |
+|--------------------|------|---------------------------------------------------------------|
+| `config-server`    | 8888 | Spring Cloud Config, конфиги сервисов лежат в `src/main/resources/config` |
+| `discovery-server` | 8761 | Eureka, реестр сервисов                                        |
+| `event-service`    | 8081 | мероприятия, площадки, категории, теги, пользователи, брони   |
+
+Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
+и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
 
 ## Запуск
 
@@ -10,24 +21,31 @@ Spring Boot 3, Java 21, PostgreSQL, Liquibase.
 docker compose up --build
 ```
 
-Приложение на `http://localhost:8080`, PostgreSQL на `localhost:5432`.
+Образы собираются одним `Dockerfile` с аргументом `MODULE`. Порядок старта задаёт
+`depends_on`: Postgres и инфраструктура, потом сервисы.
 
-Swagger UI: `http://localhost:8080/swagger-ui.html`, спецификация OpenAPI 3: `http://localhost:8080/v3/api-docs`.
-Кнопка Authorize в Swagger принимает id пользователя и подставляет его в заголовок `X-User-Id`.
+Swagger UI сервиса: `http://localhost:8081/swagger-ui.html`, спецификация OpenAPI 3:
+`http://localhost:8081/v3/api-docs`. Кнопка Authorize принимает id пользователя и
+подставляет его в заголовок `X-User-Id`. Реестр Eureka: `http://localhost:8761`.
+Конфиг сервиса глазами клиента: `http://localhost:8888/event-service/default`.
 
 Локально, только БД в Docker:
 
 ```bash
 docker compose up -d postgres
-mvn spring-boot:run
+mvn -pl config-server spring-boot:run
+mvn -pl discovery-server spring-boot:run
+mvn -pl event-service spring-boot:run
 ```
 
 Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-(по умолчанию `localhost:5432/ticketing`, `ticketing/ticketing`).
+(по умолчанию `localhost:5432/ticketing`, `ticketing/ticketing`), читаются config-server
+из `config/event-service.yml`.
 
 Тесты (`mvn test`) поднимают PostgreSQL через Testcontainers, нужен запущенный Docker.
-`mvn verify` дополнительно считает покрытие JaCoCo и падает, если строк покрыто меньше 70 %.
-Отчёт лежит в `target/site/jacoco/index.html`.
+В тестах config-server и Eureka не нужны: тестовый `application.yml` не импортирует
+конфиг и отключает клиент Eureka. `mvn verify` дополнительно считает покрытие JaCoCo
+в `event-service` и падает, если строк покрыто меньше 70 %.
 
 ## Роли
 

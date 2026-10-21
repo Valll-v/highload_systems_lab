@@ -16,19 +16,56 @@ services:
       timeout: 3s
       retries: 10
 
-  app:
-    build: .
-    container_name: ticketing-app
+  config-server:
+    build:
+      context: .
+      args:
+        MODULE: config-server
+    container_name: ticketing-config
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8888"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  discovery-server:
+    build:
+      context: .
+      args:
+        MODULE: discovery-server
+    container_name: ticketing-discovery
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8761"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  event-service:
+    build:
+      context: .
+      args:
+        MODULE: event-service
+    container_name: ticketing-event-service
     environment:
+      CONFIG_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ticketing
       DB_USER: ticketing
       DB_PASSWORD: ticketing
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
         condition: service_healthy
 
 volumes:

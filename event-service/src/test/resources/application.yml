@@ -1,10 +1,23 @@
 spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
   jpa:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 50
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+eureka:
+  client:
+    enabled: false
+
 logging:
   level:
     liquibase: warn
