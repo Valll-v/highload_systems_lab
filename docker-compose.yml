@@ -58,11 +58,28 @@ services:
       DB_NAME: ticketing
       DB_USER: ticketing
       DB_PASSWORD: ticketing
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
     depends_on:
       postgres:
         condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      args:
+        MODULE: gateway
+    container_name: ticketing-gateway
+    environment:
+      CONFIG_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka
+    ports:
+      - "8080:8080"
+    depends_on:
       config-server:
         condition: service_healthy
       discovery-server:

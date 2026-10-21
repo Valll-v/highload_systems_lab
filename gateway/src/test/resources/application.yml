@@ -1,0 +1,29 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    gateway:
+      routes:
+        - id: event-service-api
+          uri: lb://event-service
+          predicates:
+            - Path=/api/**
+        - id: event-service-docs
+          uri: lb://event-service
+          predicates:
+            - Path=/event-service/v3/api-docs
+          filters:
+            - RewritePath=/event-service/(?<path>.*), /$\{path}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: event-service
+        url: /event-service/v3/api-docs
+
+eureka:
+  client:
+    enabled: false

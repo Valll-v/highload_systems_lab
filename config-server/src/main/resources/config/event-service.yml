@@ -14,5 +14,6 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 server:
+  forward-headers-strategy: framework
   error:
     include-message: always

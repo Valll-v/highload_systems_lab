@@ -8,10 +8,13 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase.
 |--------------------|------|---------------------------------------------------------------|
 | `config-server`    | 8888 | Spring Cloud Config, конфиги сервисов лежат в `src/main/resources/config` |
 | `discovery-server` | 8761 | Eureka, реестр сервисов                                        |
+| `gateway`          | 8080 | Spring Cloud Gateway, единая точка входа и общий Swagger       |
 | `event-service`    | 8081 | мероприятия, площадки, категории, теги, пользователи, брони   |
 
 Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
 и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
+Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/**` уходит на
+`lb://event-service`, адрес инстанса берётся из Eureka.
 
 ## Запуск
 
@@ -24,18 +27,21 @@ docker compose up --build
 Образы собираются одним `Dockerfile` с аргументом `MODULE`. Порядок старта задаёт
 `depends_on`: Postgres и инфраструктура, потом сервисы.
 
-Swagger UI сервиса: `http://localhost:8081/swagger-ui.html`, спецификация OpenAPI 3:
-`http://localhost:8081/v3/api-docs`. Кнопка Authorize принимает id пользователя и
-подставляет его в заголовок `X-User-Id`. Реестр Eureka: `http://localhost:8761`.
-Конфиг сервиса глазами клиента: `http://localhost:8888/event-service/default`.
+Общий Swagger UI на gateway: `http://localhost:8080/swagger-ui.html`. В выпадающем списке
+по одному пункту на сервис, спецификация каждого проксируется через gateway
+(`/event-service/v3/api-docs`), так что Try it out ходит тем же путём, что и клиенты.
+Кнопка Authorize принимает id пользователя и подставляет его в заголовок `X-User-Id`.
+Реестр Eureka: `http://localhost:8761`. Конфиг сервиса глазами клиента:
+`http://localhost:8888/event-service/default`.
 
-Локально, только БД в Docker:
+Локально, только БД в Docker (каждый сервис в своём терминале):
 
 ```bash
 docker compose up -d postgres
 mvn -pl config-server spring-boot:run
 mvn -pl discovery-server spring-boot:run
 mvn -pl event-service spring-boot:run
+mvn -pl gateway spring-boot:run
 ```
 
 Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`

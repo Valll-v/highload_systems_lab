@@ -21,6 +21,7 @@
         <module>config-server</module>
         <module>discovery-server</module>
         <module>event-service</module>
+        <module>gateway</module>
     </modules>
 
     <properties>

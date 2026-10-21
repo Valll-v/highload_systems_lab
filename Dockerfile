@@ -5,6 +5,7 @@ COPY pom.xml .
 COPY config-server/pom.xml config-server/
 COPY discovery-server/pom.xml discovery-server/
 COPY event-service/pom.xml event-service/
+COPY gateway/pom.xml gateway/
 RUN mvn -q -B -pl ${MODULE} -am dependency:go-offline
 COPY . .
 RUN mvn -q -B -pl ${MODULE} -am -DskipTests package
