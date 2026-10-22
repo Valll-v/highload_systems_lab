@@ -1,6 +1,6 @@
 package ru.itmo.ticketing.booking.common;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.BindingContext;
@@ -14,12 +14,19 @@ import ru.itmo.ticketing.booking.client.UserRole;
 import java.util.Arrays;
 
 @Component
-@RequiredArgsConstructor
 public class CurrentUserResolver implements HandlerMethodArgumentResolver {
 
     public static final String HEADER = "X-User-Id";
 
     private final UserClient users;
+
+    /**
+     * Клиент ленивый: Feign-бин сам требует веб-конфигурацию, а она требует этот резолвер,
+     * без @Lazy контекст не стартует из-за цикла.
+     */
+    public CurrentUserResolver(@Lazy UserClient users) {
+        this.users = users;
+    }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
