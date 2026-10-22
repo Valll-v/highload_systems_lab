@@ -1,6 +1,7 @@
 # Платформа бронирования билетов
 
-Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase.
+Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервисы на Spring MVC
+и на WebFlux, доступ к базе через JPA и через R2DBC.
 
 ## Модули
 
@@ -9,7 +10,8 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase.
 | `config-server`    | 8888 | Spring Cloud Config, конфиги сервисов лежат в `src/main/resources/config` |
 | `discovery-server` | 8761 | Eureka, реестр сервисов                                        |
 | `gateway`          | 8080 | Spring Cloud Gateway, единая точка входа и общий Swagger       |
-| `event-service`    | 8081 | мероприятия, площадки, категории, теги, пользователи, брони   |
+| `event-service`    | 8081 | мероприятия, площадки, категории, теги, пользователи, брони (MVC, JPA) |
+| `user-service`     | 8082 | пользователи и роли (WebFlux, R2DBC), своя база `users`       |
 
 Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
 и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
@@ -25,7 +27,10 @@ docker compose up --build
 ```
 
 Образы собираются одним `Dockerfile` с аргументом `MODULE`. Порядок старта задаёт
-`depends_on`: Postgres и инфраструктура, потом сервисы.
+`depends_on`: Postgres и инфраструктура, потом сервисы. У каждого сервиса своя база в одном
+Postgres: `ticketing` создаёт сам образ, остальные (`users`) создаёт `docker/init-databases.sql`
+при первом запуске тома. Если том уже есть, базу нужно создать руками или удалить том
+(`docker compose down -v`).
 
 Общий Swagger UI на gateway: `http://localhost:8080/swagger-ui.html`. В выпадающем списке
 по одному пункту на сервис, спецификация каждого проксируется через gateway
@@ -41,17 +46,30 @@ docker compose up -d postgres
 mvn -pl config-server spring-boot:run
 mvn -pl discovery-server spring-boot:run
 mvn -pl event-service spring-boot:run
+mvn -pl user-service spring-boot:run
 mvn -pl gateway spring-boot:run
 ```
 
 Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-(по умолчанию `localhost:5432/ticketing`, `ticketing/ticketing`), читаются config-server
-из `config/event-service.yml`.
+(по умолчанию `localhost:5432`, `ticketing/ticketing`, база `ticketing` у event-service и
+`users` у user-service), читаются config-server из `config/<сервис>.yml`.
 
 Тесты (`mvn test`) поднимают PostgreSQL через Testcontainers, нужен запущенный Docker.
 В тестах config-server и Eureka не нужны: тестовый `application.yml` не импортирует
 конфиг и отключает клиент Eureka. `mvn verify` дополнительно считает покрытие JaCoCo
-в `event-service` и падает, если строк покрыто меньше 70 %.
+в `event-service` и `user-service` и падает, если строк покрыто меньше 70 %.
+
+## user-service
+
+Реактивный сервис: Spring WebFlux, Spring Data R2DBC, драйвер `r2dbc-postgresql`.
+Контроллер возвращает `Mono`, репозиторий `ReactiveCrudRepository`, ни один поток не
+блокируется на запросе к базе. Схему накатывает Liquibase: у него нет R2DBC-режима,
+поэтому в сервисе два драйвера, JDBC только для миграций при старте
+(`spring.liquibase.url`), R2DBC для запросов (`spring.r2dbc.url`).
+
+Проверка пользователя: аннотация `@CurrentUser` на параметре контроллера, резолвер
+читает `X-User-Id`, достаёт пользователя из базы и сверяет роль со списком в аннотации.
+Нет заголовка или такого пользователя: 401, не та роль: 403.
 
 ## Роли
 

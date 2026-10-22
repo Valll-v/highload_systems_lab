@@ -12,6 +12,12 @@ spring:
             - Path=/event-service/v3/api-docs
           filters:
             - RewritePath=/event-service/(?<path>.*), /$\{path}
+        - id: user-service-docs
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/v3/api-docs
+          filters:
+            - RewritePath=/user-service/(?<path>.*), /$\{path}
 
 springdoc:
   swagger-ui:
@@ -19,3 +25,5 @@ springdoc:
     urls:
       - name: event-service
         url: /event-service/v3/api-docs
+      - name: user-service
+        url: /user-service/v3/api-docs

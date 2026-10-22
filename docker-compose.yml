@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ticketing -d ticketing"]
       interval: 5s
@@ -60,6 +61,30 @@ services:
       DB_PASSWORD: ticketing
     expose:
       - "8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: .
+      args:
+        MODULE: user-service
+    container_name: ticketing-user-service
+    environment:
+      CONFIG_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: users
+      DB_USER: ticketing
+      DB_PASSWORD: ticketing
+    expose:
+      - "8082"
     depends_on:
       postgres:
         condition: service_healthy
