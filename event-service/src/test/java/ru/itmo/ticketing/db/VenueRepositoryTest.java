@@ -69,14 +69,4 @@ class VenueRepositoryTest extends RepositoryTestBase {
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("uk_halls_venue_name");
     }
-
-    @Test
-    void lockQueryReturnsSeatsOrderedById() {
-        Venue venue = venues.saveAndFlush(TestData.venueWithHall(1, 5));
-        List<Long> ids = venue.getHalls().get(0).getSeats().stream().map(Seat::getId).toList();
-
-        List<Seat> locked = seats.lockAllByIdIn(List.of(ids.get(4), ids.get(0), ids.get(2)));
-
-        assertThat(locked).extracting(Seat::getId).containsExactly(ids.get(0), ids.get(2), ids.get(4));
-    }
 }

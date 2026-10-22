@@ -1,28 +1,32 @@
 package ru.itmo.ticketing.event;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import ru.itmo.ticketing.booking.BookingClient;
+import ru.itmo.ticketing.booking.CancelledBookings;
 import ru.itmo.ticketing.common.ConflictException;
 import ru.itmo.ticketing.common.ForbiddenException;
 import ru.itmo.ticketing.common.NotFoundException;
+import ru.itmo.ticketing.common.ServiceUnavailableException;
 import ru.itmo.ticketing.event.dto.EventRequest;
 import ru.itmo.ticketing.event.dto.EventResponse;
-import ru.itmo.ticketing.event.dto.EventSeatResponse;
 import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.Hall;
-import ru.itmo.ticketing.venue.SeatReservationService;
 import ru.itmo.ticketing.venue.VenueService;
 
 import java.time.OffsetDateTime;
 import java.util.EnumSet;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -34,8 +38,7 @@ public class EventService {
     private final CategoryService categories;
     private final TagService tags;
     private final VenueService venues;
-    private final SeatReservationService reservations;
-    private final ApplicationEventPublisher publisher;
+    private final BookingClient bookings;
 
     public EventResponse create(UserInfo organizer, EventRequest request) {
         validateWindow(request);
@@ -71,6 +74,11 @@ public class EventService {
         return EventResponse.from(event);
     }
 
+    /**
+     * Статус меняется в своей транзакции, брони отменяет booking-service уже после коммита:
+     * он проверит, что мероприятие и правда CANCELLED. Если booking-service лежит, мероприятие
+     * всё равно отменено, вызов нужно повторить руками (POST /api/events/{id}/bookings/cancel).
+     */
     public EventResponse cancel(UserInfo actor, Long id) {
         Event event = get(id);
         if (!event.isOwnedBy(actor) && actor.role() != UserRole.ADMIN) {
@@ -78,8 +86,23 @@ public class EventService {
         }
         transition(event, EnumSet.of(EventStatus.DRAFT, EventStatus.PENDING_MODERATION, EventStatus.PUBLISHED, EventStatus.REJECTED),
                 EventStatus.CANCELLED);
-        publisher.publishEvent(new EventCancelledEvent(event.getId()));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                cancelBookings(event.getId(), actor.id());
+            }
+        });
         return EventResponse.from(event);
+    }
+
+    private void cancelBookings(Long eventId, Long actorId) {
+        try {
+            CancelledBookings result = bookings.cancelByEvent(eventId, actorId);
+            log.info("event {} cancelled, booking-service cancelled {} bookings", eventId, result.cancelled());
+        } catch (ServiceUnavailableException e) {
+            log.warn("event {} is cancelled, but booking-service is unavailable: "
+                    + "repeat POST /api/events/{}/bookings/cancel later", eventId, eventId);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -128,26 +151,6 @@ public class EventService {
             return EventResponse.from(event);
         }
         throw new NotFoundException("Event", id);
-    }
-
-    @Transactional(readOnly = true)
-    public Slice<EventSeatResponse> seatMap(Long id, Pageable pageable) {
-        Event event = get(id);
-        Set<Long> taken = reservations.reservedSeatIds(id);
-        return venues.listSeats(event.getHall().getId(), pageable)
-                .map(s -> new EventSeatResponse(s.getId(), s.getRowNo(), s.getSeatNo(), !taken.contains(s.getId())));
-    }
-
-    @Transactional(readOnly = true)
-    public Event getBookable(Long id) {
-        Event event = get(id);
-        if (event.getStatus() != EventStatus.PUBLISHED) {
-            throw new ConflictException("Event is not open for booking (status " + event.getStatus() + ")");
-        }
-        if (!event.getStartsAt().isAfter(OffsetDateTime.now())) {
-            throw new ConflictException("Event has already started");
-        }
-        return event;
     }
 
     private Event getOwned(UserInfo actor, Long id) {

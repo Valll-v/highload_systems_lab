@@ -1,6 +1,5 @@
 package ru.itmo.ticketing.db;
 
-import ru.itmo.ticketing.booking.Booking;
 import ru.itmo.ticketing.event.Category;
 import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.event.EventStatus;
@@ -31,9 +30,5 @@ final class TestData {
         Event event = new Event("Show", null, category, organizerId, hall, start, start.plusHours(2), new BigDecimal("100.00"));
         event.setStatus(status);
         return event;
-    }
-
-    static Booking booking(Long customerId, Event event) {
-        return new Booking(customerId, event, event.getPrice());
     }
 }

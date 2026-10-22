@@ -25,7 +25,6 @@ import ru.itmo.ticketing.common.RequireRole;
 import ru.itmo.ticketing.common.SliceResponse;
 import ru.itmo.ticketing.event.dto.EventRequest;
 import ru.itmo.ticketing.event.dto.EventResponse;
-import ru.itmo.ticketing.event.dto.EventSeatResponse;
 import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 
@@ -57,14 +56,6 @@ public class EventController {
     public ResponseEntity<EventResponse> get(@PathVariable Long id, HttpServletRequest request) {
         UserInfo viewer = currentUser.optional(request).orElse(null);
         return ResponseEntity.ok(service.getVisible(viewer, id));
-    }
-
-    @GetMapping("/{id}/seats")
-    public ResponseEntity<SliceResponse<EventSeatResponse>> seats(@PathVariable Long id,
-                                                                  @RequestParam(defaultValue = "0") int page,
-                                                                  @RequestParam(defaultValue = "50") int size) {
-        var pageable = Paging.of(page, size, Sort.by("rowNo", "seatNo"));
-        return ResponseEntity.ok(SliceResponse.from(service.seatMap(id, pageable)));
     }
 
     @GetMapping("/my")

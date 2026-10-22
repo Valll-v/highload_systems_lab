@@ -19,7 +19,7 @@ class OpenApiTest extends IntegrationTestBase {
         mvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title").value("Ticketing API"))
-                .andExpect(jsonPath("$.paths['/api/bookings'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/events'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/events'].get.parameters[?(@.name == 'size')]").exists())
                 .andExpect(jsonPath("$.paths['/api/tags'].get").exists())
                 .andExpect(jsonPath("$.paths['/api/events/{id}/submit'].post.parameters.length()").value(1))

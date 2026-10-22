@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/005-tags.yaml
   - include:
       file: db/changelog/006-users-moved.yaml
+  - include:
+      file: db/changelog/007-bookings-moved.yaml

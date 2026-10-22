@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-bookings-moved-to-booking-service
+      author: maria
+      comment: брони, резервы мест и билеты переехали в booking-service, своя база bookings
+      changes:
+        - dropTable:
+            tableName: tickets
+        - dropTable:
+            tableName: seat_reservations
+        - dropTable:
+            tableName: bookings

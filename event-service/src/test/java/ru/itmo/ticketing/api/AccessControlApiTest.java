@@ -39,7 +39,6 @@ class AccessControlApiTest extends IntegrationTestBase {
     @Test
     void wrongRoleIsForbidden() throws Exception {
         assertThat(api.post(customer, "/api/categories", Map.of("name", "x")).status()).isEqualTo(403);
-        assertThat(api.get(organizer, "/api/bookings").status()).isEqualTo(403);
         assertThat(api.post(admin, "/api/events", Map.of()).status()).isEqualTo(403);
         assertThat(api.get(customer, "/api/events/moderation").status()).isEqualTo(403);
         assertThat(api.get(customer, "/api/events/my").status()).isEqualTo(403);
@@ -53,22 +52,6 @@ class AccessControlApiTest extends IntegrationTestBase {
         long intruder = api.user("intruder@acl.test", "ORGANIZER");
         assertThat(api.post(intruder, "/api/events/" + event + "/submit", null).status()).isEqualTo(403);
         assertThat(api.put(intruder, "/api/events/" + event, api.eventBody(category, hall, "Hijack")).status()).isEqualTo(403);
-        assertThat(api.get(intruder, "/api/events/" + event + "/sales").status()).isEqualTo(403);
-        assertThat(api.get(organizer, "/api/events/" + event + "/sales").status()).isEqualTo(200);
-    }
-
-    @Test
-    void customerCannotReadForeignBooking() throws Exception {
-        long category = api.category(admin, "ACL2");
-        long hall = api.hall(admin, api.venue(admin, "Club2", "Perm"), 1, 3);
-        long event = api.publishedEvent(organizer, admin, category, hall, "Show");
-        long seat = api.seats(hall).get(0);
-        long booking = expect(api.post(customer, "/api/bookings", Map.of("eventId", event, "seatIds", java.util.List.of(seat))), 201).id();
-
-        long other = api.user("other@acl.test", "CUSTOMER");
-        assertThat(api.get(other, "/api/bookings/" + booking).status()).isEqualTo(403);
-        assertThat(api.post(other, "/api/bookings/" + booking + "/cancel", null).status()).isEqualTo(403);
-        assertThat(api.get(admin, "/api/bookings/" + booking).status()).isEqualTo(200);
     }
 
     @Test
