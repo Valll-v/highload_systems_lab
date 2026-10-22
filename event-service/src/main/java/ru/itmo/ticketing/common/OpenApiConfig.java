@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
                 title = "Ticketing API",
                 version = "0.1.0",
                 description = "Платформа бронирования билетов. Пользователь передаётся заголовком X-User-Id, "
-                        + "роль берётся из базы. Списки отдаются страницами не больше 50 записей."),
+                        + "роль спрашивается у user-service. Списки отдаются страницами не больше 50 записей."),
         security = @SecurityRequirement(name = CurrentUserResolver.HEADER))
 @SecurityScheme(
         name = CurrentUserResolver.HEADER,

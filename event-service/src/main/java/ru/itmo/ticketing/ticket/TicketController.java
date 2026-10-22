@@ -19,7 +19,7 @@ import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.event.EventService;
 import ru.itmo.ticketing.ticket.dto.SalesReport;
 import ru.itmo.ticketing.ticket.dto.TicketResponse;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.SeatReservationService;
 
@@ -35,19 +35,19 @@ public class TicketController {
 
     @GetMapping("/tickets")
     @RequireRole(UserRole.CUSTOMER)
-    public ResponseEntity<PageResponse<TicketResponse>> getMyTickets(@CurrentUser User customer,
+    public ResponseEntity<PageResponse<TicketResponse>> getMyTickets(@CurrentUser UserInfo customer,
                                                                      @RequestParam(defaultValue = "0") int page,
                                                                      @RequestParam(defaultValue = "20") int size) {
         var pageable = Paging.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-        return Paging.withTotal(tickets.forCustomer(customer.getId(), pageable));
+        return Paging.withTotal(tickets.forCustomer(customer.id(), pageable));
     }
 
     @GetMapping("/events/{id}/sales")
     @RequireRole({UserRole.ORGANIZER, UserRole.ADMIN})
     @Transactional(readOnly = true)
-    public ResponseEntity<SalesReport> sales(@CurrentUser User actor, @PathVariable Long id) {
+    public ResponseEntity<SalesReport> sales(@CurrentUser UserInfo actor, @PathVariable Long id) {
         Event event = events.get(id);
-        if (!event.isOwnedBy(actor) && actor.getRole() != UserRole.ADMIN) {
+        if (!event.isOwnedBy(actor) && actor.role() != UserRole.ADMIN) {
             throw new ForbiddenException("Sales report is available to the event organizer only");
         }
         int capacity = event.getHall().getSeats().size();

@@ -31,7 +31,7 @@ public record EventResponse(
         return new EventResponse(
                 e.getId(), e.getTitle(), e.getDescription(),
                 e.getCategory().getId(), e.getCategory().getName(),
-                e.getOrganizer().getId(),
+                e.getOrganizerId(),
                 hall.getId(), hall.getName(),
                 venue.getId(), venue.getName(), venue.getCity(),
                 e.getStartsAt(), e.getEndsAt(), e.getPrice(), e.getStatus(),

@@ -8,8 +8,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.itmo.ticketing.booking.BookingService;
 import ru.itmo.ticketing.common.ConflictException;
 import ru.itmo.ticketing.support.ApiClient;
-import ru.itmo.ticketing.user.User;
-import ru.itmo.ticketing.user.UserRepository;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.support.IntegrationTestBase;
 
 import java.util.ArrayList;
@@ -39,12 +38,9 @@ class ConcurrentBookingTest extends IntegrationTestBase {
     @Autowired
     private BookingService bookingService;
 
-    @Autowired
-    private UserRepository users;
-
     @Test
     void onlyOneBookingWinsTheSeat() throws Exception {
-        ApiClient api = new ApiClient(mvc, json);
+        ApiClient api = new ApiClient(mvc, json, users);
         long admin = api.user("admin@race.test", "ADMIN");
         long organizer = api.user("org@race.test", "ORGANIZER");
         long category = api.category(admin, "Race");
@@ -52,9 +48,9 @@ class ConcurrentBookingTest extends IntegrationTestBase {
         long event = api.publishedEvent(organizer, admin, category, hall, "Hot ticket");
         Long seat = api.seats(hall).get(0);
 
-        List<User> customers = new ArrayList<>();
+        List<UserInfo> customers = new ArrayList<>();
         for (int i = 0; i < CUSTOMERS; i++) {
-            customers.add(users.findById(api.user("c" + i + "@race.test", "CUSTOMER")).orElseThrow());
+            customers.add(users.me(api.user("c" + i + "@race.test", "CUSTOMER")));
         }
 
         ExecutorService pool = Executors.newFixedThreadPool(CUSTOMERS);
@@ -63,7 +59,7 @@ class ConcurrentBookingTest extends IntegrationTestBase {
         AtomicInteger conflicts = new AtomicInteger();
         List<Future<?>> futures = new ArrayList<>();
         try {
-            for (User customer : customers) {
+            for (UserInfo customer : customers) {
                 futures.add(pool.submit(() -> {
                     start.await();
                     try {

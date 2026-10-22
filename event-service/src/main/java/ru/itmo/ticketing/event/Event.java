@@ -24,7 +24,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.venue.Hall;
 
 import java.math.BigDecimal;
@@ -61,9 +61,8 @@ public class Event {
     private Category category;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
-    private User organizer;
+    @Column(name = "organizer_id", nullable = false)
+    private Long organizerId;
 
     @Setter
     @NotNull
@@ -104,12 +103,12 @@ public class Event {
     @Column(nullable = false, insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    public Event(String title, String description, Category category, User organizer, Hall hall,
+    public Event(String title, String description, Category category, Long organizerId, Hall hall,
                  OffsetDateTime startsAt, OffsetDateTime endsAt, BigDecimal price) {
         this.title = title;
         this.description = description;
         this.category = category;
-        this.organizer = organizer;
+        this.organizerId = organizerId;
         this.hall = hall;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -122,8 +121,8 @@ public class Event {
         return startsAt != null && endsAt != null && endsAt.isAfter(startsAt);
     }
 
-    public boolean isOwnedBy(User user) {
-        return organizer.getId().equals(user.getId());
+    public boolean isOwnedBy(UserInfo user) {
+        return organizerId.equals(user.id());
     }
 
     public void setTags(Collection<Tag> newTags) {

@@ -14,7 +14,7 @@ import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.event.EventCancelledEvent;
 import ru.itmo.ticketing.event.EventService;
 import ru.itmo.ticketing.ticket.TicketService;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.Seat;
 import ru.itmo.ticketing.venue.SeatReservationService;
@@ -35,7 +35,7 @@ public class BookingService {
     private final TicketService tickets;
 
     @Transactional
-    public BookingResponse create(User customer, Long eventId, List<Long> seatIds) {
+    public BookingResponse create(UserInfo customer, Long eventId, List<Long> seatIds) {
         Set<Long> uniqueSeats = new LinkedHashSet<>(seatIds);
         if (uniqueSeats.size() != seatIds.size()) {
             throw new IllegalArgumentException("Duplicate seat ids in request");
@@ -44,7 +44,7 @@ public class BookingService {
         Event event = events.getBookable(eventId);
 
         BigDecimal total = event.getPrice().multiply(BigDecimal.valueOf(uniqueSeats.size()));
-        Booking booking = bookings.save(new Booking(customer, event, total));
+        Booking booking = bookings.save(new Booking(customer.id(), event, total));
 
         List<Seat> seats = reservations.reserve(event, uniqueSeats, booking);
 
@@ -53,7 +53,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse cancel(User actor, Long bookingId) {
+    public BookingResponse cancel(UserInfo actor, Long bookingId) {
         Booking booking = getAccessible(actor, bookingId);
         if (!booking.isActive()) {
             throw new ConflictException("Booking is already cancelled");
@@ -70,13 +70,13 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse get(User actor, Long bookingId) {
+    public BookingResponse get(UserInfo actor, Long bookingId) {
         return toResponse(getAccessible(actor, bookingId));
     }
 
     @Transactional(readOnly = true)
-    public Page<BookingResponse> listForCustomer(User customer, Pageable pageable) {
-        return bookings.findAllByCustomerId(customer.getId(), pageable).map(this::toResponse);
+    public Page<BookingResponse> listForCustomer(UserInfo customer, Pageable pageable) {
+        return bookings.findAllByCustomerId(customer.id(), pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -84,10 +84,10 @@ public class BookingService {
         return bookings.countByEventIdAndStatus(eventId, BookingStatus.ACTIVE);
     }
 
-    private Booking getAccessible(User actor, Long bookingId) {
+    private Booking getAccessible(UserInfo actor, Long bookingId) {
         Booking booking = bookings.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking", bookingId));
-        boolean owner = booking.getCustomer().getId().equals(actor.getId());
-        if (!owner && actor.getRole() != UserRole.ADMIN) {
+        boolean owner = booking.getCustomerId().equals(actor.id());
+        if (!owner && actor.role() != UserRole.ADMIN) {
             throw new ForbiddenException("Booking " + bookingId + " belongs to another customer");
         }
         return booking;

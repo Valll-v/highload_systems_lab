@@ -8,9 +8,15 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import ru.itmo.ticketing.user.User;
-import ru.itmo.ticketing.user.UserRepository;
+import ru.itmo.ticketing.user.UserClient;
+import ru.itmo.ticketing.user.UserInfo;
 
+import java.util.Optional;
+
+/**
+ * Пользователь из заголовка X-User-Id. Роль спрашивается у user-service один раз на запрос,
+ * результат лежит в атрибуте запроса.
+ */
 @Component
 @RequiredArgsConstructor
 public class CurrentUserResolver implements HandlerMethodArgumentResolver {
@@ -18,12 +24,12 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
     public static final String HEADER = "X-User-Id";
     static final String REQUEST_ATTRIBUTE = CurrentUserResolver.class.getName() + ".user";
 
-    private final UserRepository users;
+    private final UserClient users;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUser.class)
-                && User.class.isAssignableFrom(parameter.getParameterType());
+                && UserInfo.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
@@ -33,9 +39,9 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
         return resolve(request);
     }
 
-    public User resolve(HttpServletRequest request) {
+    public UserInfo resolve(HttpServletRequest request) {
         Object cached = request.getAttribute(REQUEST_ATTRIBUTE);
-        if (cached instanceof User user) {
+        if (cached instanceof UserInfo user) {
             return user;
         }
         String raw = request.getHeader(HEADER);
@@ -48,9 +54,23 @@ public class CurrentUserResolver implements HandlerMethodArgumentResolver {
         } catch (NumberFormatException e) {
             throw new UnauthorizedException(HEADER + " must be a number");
         }
-        User user = users.findById(id)
-                .orElseThrow(() -> new UnauthorizedException("Unknown user " + id));
+        UserInfo user = users.me(id);
         request.setAttribute(REQUEST_ATTRIBUTE, user);
         return user;
+    }
+
+    /**
+     * Для публичных эндпоинтов: нет заголовка, неизвестный пользователь или лежащий
+     * user-service означают анонимного клиента.
+     */
+    public Optional<UserInfo> optional(HttpServletRequest request) {
+        if (request.getHeader(HEADER) == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(resolve(request));
+        } catch (UnauthorizedException | ServiceUnavailableException e) {
+            return Optional.empty();
+        }
     }
 }

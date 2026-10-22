@@ -12,8 +12,6 @@ import ru.itmo.ticketing.event.EventRepository;
 import ru.itmo.ticketing.event.EventStatus;
 import ru.itmo.ticketing.event.Tag;
 import ru.itmo.ticketing.support.RepositoryTestBase;
-import ru.itmo.ticketing.user.User;
-import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.Hall;
 import ru.itmo.ticketing.venue.Venue;
 
@@ -30,7 +28,7 @@ class EventRepositoryTest extends RepositoryTestBase {
     @Autowired
     private EventRepository events;
 
-    private User organizer;
+    private Long organizer;
     private Category category;
     private Hall hall;
     private OffsetDateTime start;
@@ -38,7 +36,7 @@ class EventRepositoryTest extends RepositoryTestBase {
 
     @BeforeEach
     void setUp() {
-        organizer = em.persist(TestData.user(UserRole.ORGANIZER));
+        organizer = 1L;
         category = em.persist(TestData.category());
         Venue venue = em.persist(TestData.venueWithHall(1, 1));
         hall = venue.getHalls().get(0);

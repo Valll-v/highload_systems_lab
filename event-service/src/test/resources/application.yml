@@ -4,6 +4,9 @@ spring:
       enabled: false
       import-check:
         enabled: false
+    openfeign:
+      circuitbreaker:
+        enabled: true
   jpa:
     hibernate:
       ddl-auto: validate
@@ -13,6 +16,21 @@ spring:
         default_batch_fetch_size: 50
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        ignore-exceptions:
+          - ru.itmo.ticketing.common.UnauthorizedException
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 3s
 
 eureka:
   client:

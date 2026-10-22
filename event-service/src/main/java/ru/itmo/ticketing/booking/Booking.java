@@ -17,7 +17,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import ru.itmo.ticketing.event.Event;
-import ru.itmo.ticketing.user.User;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -32,9 +31,9 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(nullable = false)
-    private User customer;
+    @NotNull
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(nullable = false)
@@ -55,8 +54,8 @@ public class Booking {
 
     private OffsetDateTime cancelledAt;
 
-    public Booking(User customer, Event event, BigDecimal totalPrice) {
-        this.customer = customer;
+    public Booking(Long customerId, Event event, BigDecimal totalPrice) {
+        this.customerId = customerId;
         this.event = event;
         this.totalPrice = totalPrice;
         this.status = BookingStatus.ACTIVE;

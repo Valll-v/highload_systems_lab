@@ -12,8 +12,10 @@ class GatewayRoutesTest {
     private WebTestClient client;
 
     @Test
-    void apiIsRoutedToEventService() {
+    void apiIsRoutedToServices() {
         client.get().uri("/api/events").exchange()
+                .expectStatus().isEqualTo(503);
+        client.get().uri("/api/users/me").exchange()
                 .expectStatus().isEqualTo(503);
     }
 

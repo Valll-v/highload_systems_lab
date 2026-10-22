@@ -22,7 +22,7 @@ class OpenApiTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.paths['/api/bookings'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/events'].get.parameters[?(@.name == 'size')]").exists())
                 .andExpect(jsonPath("$.paths['/api/tags'].get").exists())
-                .andExpect(jsonPath("$.paths['/api/users/me'].get.parameters").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/events/{id}/submit'].post.parameters.length()").value(1))
                 .andExpect(jsonPath("$.components.securitySchemes['X-User-Id'].in").value("header"));
     }
 

@@ -10,13 +10,14 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервис
 | `config-server`    | 8888 | Spring Cloud Config, конфиги сервисов лежат в `src/main/resources/config` |
 | `discovery-server` | 8761 | Eureka, реестр сервисов                                        |
 | `gateway`          | 8080 | Spring Cloud Gateway, единая точка входа и общий Swagger       |
-| `event-service`    | 8081 | мероприятия, площадки, категории, теги, пользователи, брони (MVC, JPA) |
+| `event-service`    | 8081 | мероприятия, площадки, категории, теги, брони (MVC, JPA); роли берёт у user-service |
 | `user-service`     | 8082 | пользователи и роли (WebFlux, R2DBC), своя база `users`       |
 
 Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
 и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
-Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/**` уходит на
-`lb://event-service`, адрес инстанса берётся из Eureka.
+Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/users/**` уходит на
+`lb://user-service`, остальное `/api/**` на `lb://event-service`, адрес инстанса берётся
+из Eureka.
 
 ## Запуск
 
@@ -71,9 +72,29 @@ mvn -pl gateway spring-boot:run
 читает `X-User-Id`, достаёт пользователя из базы и сверяет роль со списком в аннотации.
 Нет заголовка или такого пользователя: 401, не та роль: 403.
 
+## Feign и Circuit Breaker
+
+event-service пользователей не хранит, в `events.organizer_id` и `bookings.customer_id`
+лежат только их id (миграция 006 убирает таблицу `users` и внешние ключи на неё). Роль
+берётся через OpenFeign: `UserClient` зовёт `GET /api/users/me` на `user-service` (адрес из
+Eureka) с тем же `X-User-Id`, что прислал клиент. Ответ кладётся в атрибут запроса, так что
+проверка `@RequireRole` и параметр `@CurrentUser` делают один вызов на запрос.
+
+Вызов обёрнут в resilience4j через Spring Cloud CircuitBreaker
+(`spring.cloud.openfeign.circuitbreaker.enabled`). Настройки в `config/event-service.yml`:
+окно 10 вызовов, при половине ошибок выключатель открывается на 10 секунд, таймаут вызова
+3 секунды. Ответы 401 и 404 от user-service ошибками не считаются (`ignore-exceptions`):
+это неизвестный пользователь, а не авария.
+
+Fallback (`UserClientFallback`): если user-service недоступен или выключатель открыт,
+защищённые эндпоинты отвечают 503, а публичные (`GET /api/events`, `GET /api/events/{id}`)
+работают дальше и считают клиента анонимом. Состояние выключателя видно в
+`/actuator/health` и `/actuator/circuitbreakers` event-service.
+
 ## Роли
 
-Пользователь передаётся заголовком `X-User-Id`. Роли: `CUSTOMER`, `ORGANIZER`, `ADMIN`.
+Пользователь передаётся заголовком `X-User-Id`, регистрация и смена роли живут в
+user-service. Роли: `CUSTOMER`, `ORGANIZER`, `ADMIN`.
 
 | Роль      | Что может                                                        |
 |-----------|------------------------------------------------------------------|

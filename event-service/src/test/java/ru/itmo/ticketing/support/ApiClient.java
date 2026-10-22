@@ -7,6 +7,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import ru.itmo.ticketing.user.UserRole;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -27,10 +28,12 @@ public class ApiClient {
 
     private final MockMvc mvc;
     private final ObjectMapper json;
+    private final TestUsers users;
 
-    public ApiClient(MockMvc mvc, ObjectMapper json) {
+    public ApiClient(MockMvc mvc, ObjectMapper json, TestUsers users) {
         this.mvc = mvc;
         this.json = json;
+        this.users = users;
     }
 
     public Response post(Long userId, String path, Object body) throws Exception {
@@ -66,8 +69,8 @@ public class ApiClient {
         return new Response(result.getResponse().getStatus(), node, result.getResponse().getHeader("Location"));
     }
 
-    public long user(String email, String role) throws Exception {
-        return expect(post(null, "/api/users", Map.of("email", email, "fullName", "Test " + role, "role", role)), 201).id();
+    public long user(String email, String role) {
+        return users.add(UserRole.valueOf(role), email);
     }
 
     public long category(long admin, String name) throws Exception {

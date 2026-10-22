@@ -13,7 +13,7 @@ import ru.itmo.ticketing.common.NotFoundException;
 import ru.itmo.ticketing.event.dto.EventRequest;
 import ru.itmo.ticketing.event.dto.EventResponse;
 import ru.itmo.ticketing.event.dto.EventSeatResponse;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.Hall;
 import ru.itmo.ticketing.venue.SeatReservationService;
@@ -37,17 +37,17 @@ public class EventService {
     private final SeatReservationService reservations;
     private final ApplicationEventPublisher publisher;
 
-    public EventResponse create(User organizer, EventRequest request) {
+    public EventResponse create(UserInfo organizer, EventRequest request) {
         validateWindow(request);
         Event event = new Event(
                 request.title().trim(), request.description(),
-                categories.get(request.categoryId()), organizer, venues.getHall(request.hallId()),
+                categories.get(request.categoryId()), organizer.id(), venues.getHall(request.hallId()),
                 request.startsAt(), request.endsAt(), request.price());
         event.setTags(tags.getAll(request.tagIds()));
         return EventResponse.from(events.save(event));
     }
 
-    public EventResponse update(User actor, Long id, EventRequest request) {
+    public EventResponse update(UserInfo actor, Long id, EventRequest request) {
         Event event = getOwned(actor, id);
         if (!EDITABLE.contains(event.getStatus())) {
             throw new ConflictException("Event can be edited only in DRAFT or REJECTED status, current: " + event.getStatus());
@@ -65,15 +65,15 @@ public class EventService {
         return EventResponse.from(event);
     }
 
-    public EventResponse submit(User actor, Long id) {
+    public EventResponse submit(UserInfo actor, Long id) {
         Event event = getOwned(actor, id);
         transition(event, EDITABLE, EventStatus.PENDING_MODERATION);
         return EventResponse.from(event);
     }
 
-    public EventResponse cancel(User actor, Long id) {
+    public EventResponse cancel(UserInfo actor, Long id) {
         Event event = get(id);
-        if (!event.isOwnedBy(actor) && actor.getRole() != UserRole.ADMIN) {
+        if (!event.isOwnedBy(actor) && actor.role() != UserRole.ADMIN) {
             throw new ForbiddenException("Only the organizer or an admin can cancel the event");
         }
         transition(event, EnumSet.of(EventStatus.DRAFT, EventStatus.PENDING_MODERATION, EventStatus.PUBLISHED, EventStatus.REJECTED),
@@ -83,8 +83,8 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public Page<EventResponse> listMine(User organizer, Pageable pageable) {
-        return events.findAllByOrganizerId(organizer.getId(), pageable).map(EventResponse::from);
+    public Page<EventResponse> listMine(UserInfo organizer, Pageable pageable) {
+        return events.findAllByOrganizerId(organizer.id(), pageable).map(EventResponse::from);
     }
 
     public EventResponse publish(Long id) {
@@ -119,12 +119,12 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventResponse getVisible(User viewer, Long id) {
+    public EventResponse getVisible(UserInfo viewer, Long id) {
         Event event = get(id);
         if (event.getStatus() == EventStatus.PUBLISHED) {
             return EventResponse.from(event);
         }
-        if (viewer != null && (event.isOwnedBy(viewer) || viewer.getRole() == UserRole.ADMIN)) {
+        if (viewer != null && (event.isOwnedBy(viewer) || viewer.role() == UserRole.ADMIN)) {
             return EventResponse.from(event);
         }
         throw new NotFoundException("Event", id);
@@ -150,7 +150,7 @@ public class EventService {
         return event;
     }
 
-    private Event getOwned(User actor, Long id) {
+    private Event getOwned(UserInfo actor, Long id) {
         Event event = get(id);
         if (!event.isOwnedBy(actor)) {
             throw new ForbiddenException("Event " + id + " belongs to another organizer");

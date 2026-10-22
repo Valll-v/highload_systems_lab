@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 
 import java.util.Arrays;
@@ -29,10 +29,10 @@ public class RoleInterceptor implements HandlerInterceptor {
         if (required == null) {
             return true;
         }
-        User user = resolver.resolve(request);
+        UserInfo user = resolver.resolve(request);
         UserRole[] allowed = required.value();
-        if (Arrays.stream(allowed).noneMatch(r -> r == user.getRole())) {
-            throw new ForbiddenException("Requires role " + Arrays.toString(allowed) + ", current role is " + user.getRole());
+        if (Arrays.stream(allowed).noneMatch(r -> r == user.role())) {
+            throw new ForbiddenException("Requires role " + Arrays.toString(allowed) + ", current role is " + user.role());
         }
         return true;
     }

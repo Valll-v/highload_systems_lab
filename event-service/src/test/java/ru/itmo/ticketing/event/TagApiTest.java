@@ -34,7 +34,7 @@ class TagApiTest extends IntegrationTestBase {
 
     @BeforeAll
     void setUp() throws Exception {
-        api = new ApiClient(mvc, json);
+        api = new ApiClient(mvc, json, users);
         admin = api.user("admin@tag.test", "ADMIN");
         organizer = api.user("org@tag.test", "ORGANIZER");
         customer = api.user("customer@tag.test", "CUSTOMER");

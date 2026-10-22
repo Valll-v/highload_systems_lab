@@ -1,0 +1,8 @@
+package ru.itmo.ticketing.common;
+
+public class ServiceUnavailableException extends RuntimeException {
+
+    public ServiceUnavailableException(String message) {
+        super(message);
+    }
+}

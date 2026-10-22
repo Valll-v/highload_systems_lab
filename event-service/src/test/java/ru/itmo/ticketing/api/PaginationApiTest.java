@@ -33,7 +33,7 @@ class PaginationApiTest extends IntegrationTestBase {
 
     @BeforeAll
     void setUp() throws Exception {
-        api = new ApiClient(mvc, json);
+        api = new ApiClient(mvc, json, users);
         admin = api.user("admin@page.test", "ADMIN");
         organizer = api.user("org@page.test", "ORGANIZER");
         category = api.category(admin, "Paged");
@@ -42,7 +42,7 @@ class PaginationApiTest extends IntegrationTestBase {
 
     @Test
     void sizeIsCappedAtFifty() throws Exception {
-        mvc.perform(get("/api/users?size=500").header("X-User-Id", admin))
+        mvc.perform(get("/api/events/my?size=500").header("X-User-Id", organizer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(50))
                 .andExpect(header().exists("X-Total-Count"));

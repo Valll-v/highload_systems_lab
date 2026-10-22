@@ -6,8 +6,14 @@ spring:
         enabled: false
     gateway:
       routes:
+        - id: user-service-api
+          uri: lb://user-service
+          order: 0
+          predicates:
+            - Path=/api/users/**
         - id: event-service-api
           uri: lb://event-service
+          order: 10
           predicates:
             - Path=/api/**
         - id: event-service-docs

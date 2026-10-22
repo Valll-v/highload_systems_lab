@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-users-moved-to-user-service
+      author: maria
+      comment: пользователи переехали в user-service, здесь остаются только их id
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: events
+            constraintName: fk_events_organizer
+        - dropForeignKeyConstraint:
+            baseTableName: bookings
+            constraintName: fk_bookings_customer
+        - dropTable:
+            tableName: users

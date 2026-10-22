@@ -38,7 +38,7 @@ class BookingFlowApiTest extends IntegrationTestBase {
 
     @BeforeAll
     void setUp() throws Exception {
-        api = new ApiClient(mvc, json);
+        api = new ApiClient(mvc, json, users);
         admin = api.user("admin@flow.test", "ADMIN");
         organizer = api.user("org@flow.test", "ORGANIZER");
         customer = api.user("customer@flow.test", "CUSTOMER");

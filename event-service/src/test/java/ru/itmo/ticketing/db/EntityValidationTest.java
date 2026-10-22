@@ -9,8 +9,6 @@ import ru.itmo.ticketing.event.Event;
 import ru.itmo.ticketing.event.EventStatus;
 import ru.itmo.ticketing.event.Tag;
 import ru.itmo.ticketing.support.RepositoryTestBase;
-import ru.itmo.ticketing.user.User;
-import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.venue.Venue;
 
 import java.math.BigDecimal;
@@ -24,13 +22,6 @@ class EntityValidationTest extends RepositoryTestBase {
     private TestEntityManager em;
 
     @Test
-    void userWithBadEmailIsRejectedBeforeInsert() {
-        assertThatThrownBy(() -> em.persistAndFlush(new User("not-an-email", "Name", UserRole.CUSTOMER)))
-                .isInstanceOf(ConstraintViolationException.class)
-                .hasMessageContaining("email");
-    }
-
-    @Test
     void blankNamesAreRejected() {
         assertThatThrownBy(() -> em.persistAndFlush(new Venue(" ", "City", "Address")))
                 .isInstanceOf(ConstraintViolationException.class);
@@ -42,7 +33,7 @@ class EntityValidationTest extends RepositoryTestBase {
 
     @Test
     void eventWindowAndPriceAreChecked() {
-        User organizer = em.persist(TestData.user(UserRole.ORGANIZER));
+        Long organizer = 1L;
         Category category = em.persist(TestData.category());
         Venue venue = em.persist(TestData.venueWithHall(1, 1));
         OffsetDateTime start = OffsetDateTime.now().plusDays(1);

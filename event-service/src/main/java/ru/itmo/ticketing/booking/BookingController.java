@@ -18,7 +18,7 @@ import ru.itmo.ticketing.common.CurrentUser;
 import ru.itmo.ticketing.common.PageResponse;
 import ru.itmo.ticketing.common.Paging;
 import ru.itmo.ticketing.common.RequireRole;
-import ru.itmo.ticketing.user.User;
+import ru.itmo.ticketing.user.UserInfo;
 import ru.itmo.ticketing.user.UserRole;
 
 import java.net.URI;
@@ -32,7 +32,7 @@ public class BookingController {
 
     @PostMapping
     @RequireRole(UserRole.CUSTOMER)
-    public ResponseEntity<BookingResponse> create(@CurrentUser User customer, @Valid @RequestBody CreateBookingRequest request) {
+    public ResponseEntity<BookingResponse> create(@CurrentUser UserInfo customer, @Valid @RequestBody CreateBookingRequest request) {
         BookingResponse booking = service.create(customer, request.eventId(), request.seatIds());
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(booking.id()).toUri();
         return ResponseEntity.created(location).body(booking);
@@ -40,7 +40,7 @@ public class BookingController {
 
     @GetMapping
     @RequireRole(UserRole.CUSTOMER)
-    public ResponseEntity<PageResponse<BookingResponse>> getMyBookings(@CurrentUser User customer,
+    public ResponseEntity<PageResponse<BookingResponse>> getMyBookings(@CurrentUser UserInfo customer,
                                                                        @RequestParam(defaultValue = "0") int page,
                                                                        @RequestParam(defaultValue = "20") int size) {
         var pageable = Paging.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id"));
@@ -49,13 +49,13 @@ public class BookingController {
 
     @GetMapping("/{id}")
     @RequireRole({UserRole.CUSTOMER, UserRole.ADMIN})
-    public ResponseEntity<BookingResponse> get(@CurrentUser User actor, @PathVariable Long id) {
+    public ResponseEntity<BookingResponse> get(@CurrentUser UserInfo actor, @PathVariable Long id) {
         return ResponseEntity.ok(service.get(actor, id));
     }
 
     @PostMapping("/{id}/cancel")
     @RequireRole({UserRole.CUSTOMER, UserRole.ADMIN})
-    public ResponseEntity<BookingResponse> cancel(@CurrentUser User actor, @PathVariable Long id) {
+    public ResponseEntity<BookingResponse> cancel(@CurrentUser UserInfo actor, @PathVariable Long id) {
         return ResponseEntity.ok(service.cancel(actor, id));
     }
 }

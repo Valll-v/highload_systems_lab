@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.itmo.ticketing.user.User;
-import ru.itmo.ticketing.user.UserRepository;
 import ru.itmo.ticketing.user.UserRole;
 import ru.itmo.ticketing.support.IntegrationTestBase;
 
@@ -24,9 +22,6 @@ class VenueApiTest extends IntegrationTestBase {
     private MockMvc mvc;
 
     @Autowired
-    private UserRepository users;
-
-    @Autowired
     private VenueRepository venues;
 
     private Long admin;
@@ -34,10 +29,8 @@ class VenueApiTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        admin = users.findByEmailIgnoreCase("admin@venue.ru")
-                .orElseGet(() -> users.save(new User("admin@venue.ru", "Admin", UserRole.ADMIN))).getId();
-        customer = users.findByEmailIgnoreCase("customer@venue.ru")
-                .orElseGet(() -> users.save(new User("customer@venue.ru", "Customer", UserRole.CUSTOMER))).getId();
+        admin = users.add(UserRole.ADMIN, "admin@venue.ru");
+        customer = users.add(UserRole.CUSTOMER, "customer@venue.ru");
     }
 
     @Test

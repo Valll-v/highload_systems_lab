@@ -22,7 +22,7 @@ public record BookingResponse(
 ) {
     public static BookingResponse from(Booking b, List<Ticket> tickets) {
         return new BookingResponse(
-                b.getId(), b.getCustomer().getId(), b.getEvent().getId(), b.getEvent().getTitle(),
+                b.getId(), b.getCustomerId(), b.getEvent().getId(), b.getEvent().getTitle(),
                 b.getStatus(), b.getTotalPrice(), b.getCreatedAt(), b.getCancelledAt(),
                 tickets.stream().map(TicketResponse::from).toList());
     }

@@ -20,8 +20,8 @@ class SchemaMigrationTest extends IntegrationTestBase {
                 "select table_name from information_schema.tables where table_schema = 'public' order by table_name",
                 String.class);
 
-        assertThat(tables).contains(
-                "users", "categories", "venues", "halls", "seats",
+        assertThat(tables).doesNotContain("users").contains(
+                "categories", "venues", "halls", "seats",
                 "events", "bookings", "seat_reservations", "tickets", "tags", "event_tags");
     }
 
