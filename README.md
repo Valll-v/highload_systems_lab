@@ -12,12 +12,14 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервис
 | `gateway`          | 8080 | Spring Cloud Gateway, единая точка входа и общий Swagger       |
 | `event-service`    | 8081 | мероприятия, площадки, категории, теги, брони (MVC, JPA); роли берёт у user-service |
 | `user-service`     | 8082 | пользователи и роли (WebFlux, R2DBC), своя база `users`       |
+| `booking-service`  | 8083 | брони, резервы мест, билеты, схема занятости и продажи (WebFlux, JPA), своя база `bookings` |
 
 Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
 и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
 Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/users/**` уходит на
-`lb://user-service`, остальное `/api/**` на `lb://event-service`, адрес инстанса берётся
-из Eureka.
+`lb://user-service`, брони, билеты, схема мест и продажи (`/api/bookings/**`, `/api/tickets`,
+`/api/events/{id}/seats`, `/api/events/{id}/sales`) на `lb://booking-service`, остальное
+`/api/**` на `lb://event-service`. Адрес инстанса берётся из Eureka.
 
 ## Запуск
 
@@ -29,7 +31,7 @@ docker compose up --build
 
 Образы собираются одним `Dockerfile` с аргументом `MODULE`. Порядок старта задаёт
 `depends_on`: Postgres и инфраструктура, потом сервисы. У каждого сервиса своя база в одном
-Postgres: `ticketing` создаёт сам образ, остальные (`users`) создаёт `docker/init-databases.sql`
+Postgres: `ticketing` создаёт сам образ, остальные (`users`, `bookings`) создаёт `docker/init-databases.sql`
 при первом запуске тома. Если том уже есть, базу нужно создать руками или удалить том
 (`docker compose down -v`).
 
@@ -48,17 +50,19 @@ mvn -pl config-server spring-boot:run
 mvn -pl discovery-server spring-boot:run
 mvn -pl event-service spring-boot:run
 mvn -pl user-service spring-boot:run
+mvn -pl booking-service spring-boot:run
 mvn -pl gateway spring-boot:run
 ```
 
 Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-(по умолчанию `localhost:5432`, `ticketing/ticketing`, база `ticketing` у event-service и
-`users` у user-service), читаются config-server из `config/<сервис>.yml`.
+(по умолчанию `localhost:5432`, `ticketing/ticketing`, база `ticketing` у event-service,
+`users` у user-service, `bookings` у booking-service), читаются config-server из
+`config/<сервис>.yml`.
 
 Тесты (`mvn test`) поднимают PostgreSQL через Testcontainers, нужен запущенный Docker.
 В тестах config-server и Eureka не нужны: тестовый `application.yml` не импортирует
 конфиг и отключает клиент Eureka. `mvn verify` дополнительно считает покрытие JaCoCo
-в `event-service` и `user-service` и падает, если строк покрыто меньше 70 %.
+в каждом сервисе и падает, если строк покрыто меньше 70 %.
 
 ## user-service
 
@@ -71,6 +75,21 @@ mvn -pl gateway spring-boot:run
 Проверка пользователя: аннотация `@CurrentUser` на параметре контроллера, резолвер
 читает `X-User-Id`, достаёт пользователя из базы и сверяет роль со списком в аннотации.
 Нет заголовка или такого пользователя: 401, не та роль: 403.
+
+## booking-service
+
+Второй реактивный сервис, но с блокирующим хранилищем: Spring WebFlux снаружи, Spring Data JPA
+внутри. Контроллеры возвращают `Mono`, а каждый вызов сервиса завёрнут в
+`Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic())` (`common/Blocking.java`):
+JPA и Feign блокируют поток, поэтому работают на пуле boundedElastic, а event loop Netty
+остаётся свободным. Транзакция бронирования открывается через `TransactionTemplate` уже
+после запросов в event-service, чтобы не держать соединение с базой на время HTTP.
+
+Сервис знает только id мероприятий, мест и пользователей. Мероприятие, зал и схему мест он
+спрашивает у event-service (`EventClient`), роль у user-service (`UserClient`), оба через
+OpenFeign с circuit breaker и fallback: 404 от event-service пробрасывается как 404,
+недоступность как 503. Схема занятости `GET /api/events/{id}/seats` собирается из страницы
+зала event-service и резервов в своей базе.
 
 ## Feign и Circuit Breaker
 
@@ -137,6 +156,7 @@ user-service. Роли: `CUSTOMER`, `ORGANIZER`, `ADMIN`.
 | POST   | /api/events/{id}/publish               | ADMIN            |
 | POST   | /api/events/{id}/reject                | ADMIN            |
 | GET    | /api/events/{id}/sales                 | ORGANIZER, ADMIN |
+| POST   | /api/events/{id}/bookings/cancel       | ORGANIZER, ADMIN |
 | POST   | /api/bookings                          | CUSTOMER         |
 | GET    | /api/bookings, /api/bookings/{id}      | CUSTOMER, ADMIN  |
 | POST   | /api/bookings/{id}/cancel              | CUSTOMER, ADMIN  |

@@ -17,6 +17,8 @@ class GatewayRoutesTest {
                 .expectStatus().isEqualTo(503);
         client.get().uri("/api/users/me").exchange()
                 .expectStatus().isEqualTo(503);
+        client.get().uri("/api/events/1/seats").exchange()
+                .expectStatus().isEqualTo(503);
     }
 
     @Test
@@ -30,10 +32,10 @@ class GatewayRoutesTest {
         client.get().uri("/v3/api-docs/swagger-config").exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.urls[0].name").isEqualTo("event-service")
-                .jsonPath("$.urls[0].url").isEqualTo("/event-service/v3/api-docs")
-                .jsonPath("$.urls[1].name").isEqualTo("user-service")
-                .jsonPath("$.urls[1].url").isEqualTo("/user-service/v3/api-docs");
+                .jsonPath("$.urls.length()").isEqualTo(3)
+                .jsonPath("$.urls[?(@.name == 'event-service' && @.url == '/event-service/v3/api-docs')]").exists()
+                .jsonPath("$.urls[?(@.name == 'user-service' && @.url == '/user-service/v3/api-docs')]").exists()
+                .jsonPath("$.urls[?(@.name == 'booking-service' && @.url == '/booking-service/v3/api-docs')]").exists();
 
         client.get().uri("/swagger-ui.html").exchange()
                 .expectStatus().is3xxRedirection();

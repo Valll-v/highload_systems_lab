@@ -22,6 +22,7 @@
         <module>discovery-server</module>
         <module>event-service</module>
         <module>user-service</module>
+        <module>booking-service</module>
         <module>gateway</module>
     </modules>
 

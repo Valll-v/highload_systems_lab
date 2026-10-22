@@ -6,6 +6,11 @@ spring:
         enabled: false
     gateway:
       routes:
+        - id: booking-service-api
+          uri: lb://booking-service
+          order: 0
+          predicates:
+            - Path=/api/bookings/**,/api/tickets/**,/api/events/*/seats,/api/events/*/sales,/api/events/*/bookings/**
         - id: user-service-api
           uri: lb://user-service
           order: 0
@@ -28,6 +33,12 @@ spring:
             - Path=/user-service/v3/api-docs
           filters:
             - RewritePath=/user-service/(?<path>.*), /$\{path}
+        - id: booking-service-docs
+          uri: lb://booking-service
+          predicates:
+            - Path=/booking-service/v3/api-docs
+          filters:
+            - RewritePath=/booking-service/(?<path>.*), /$\{path}
 
 springdoc:
   swagger-ui:
@@ -37,6 +48,8 @@ springdoc:
         url: /event-service/v3/api-docs
       - name: user-service
         url: /user-service/v3/api-docs
+      - name: booking-service
+        url: /booking-service/v3/api-docs
 
 eureka:
   client:

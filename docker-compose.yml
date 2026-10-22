@@ -93,6 +93,30 @@ services:
       discovery-server:
         condition: service_healthy
 
+  booking-service:
+    build:
+      context: .
+      args:
+        MODULE: booking-service
+    container_name: ticketing-booking-service
+    environment:
+      CONFIG_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: bookings
+      DB_USER: ticketing
+      DB_PASSWORD: ticketing
+    expose:
+      - "8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+
   gateway:
     build:
       context: .

@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: booking-service
+  config:
+    import: "optional:configserver:${CONFIG_URL:http://localhost:8888}"
+
+server:
+  port: ${SERVER_PORT:8083}
