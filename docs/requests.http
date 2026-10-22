@@ -1,4 +1,7 @@
-### Register admin
+# Все запросы через gateway. Порядок как на показе: пользователи, справочники, мероприятие,
+# брони, потом инфраструктура.
+
+### Register admin (user-service)
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
@@ -16,12 +19,27 @@ Content-Type: application/json
 
 {"email": "user@example.com", "fullName": "Customer"}
 
-### Create category (admin = 1)
+### Who am I (user-service, reactive)
+GET http://localhost:8080/api/users/me
+X-User-Id: 3
+
+### Users, page with X-Total-Count (admin = 1)
+GET http://localhost:8080/api/users?page=0&size=10
+X-User-Id: 1
+
+### Create category (event-service asks user-service for the role)
 POST http://localhost:8080/api/categories
 X-User-Id: 1
 Content-Type: application/json
 
 {"name": "Concerts"}
+
+### Create tag (admin)
+POST http://localhost:8080/api/tags
+X-User-Id: 1
+Content-Type: application/json
+
+{"name": "Rock"}
 
 ### Create venue
 POST http://localhost:8080/api/venues
@@ -37,7 +55,7 @@ Content-Type: application/json
 
 {"name": "Main", "rows": 5, "seatsPerRow": 10}
 
-### Create event (organizer = 2)
+### Create event with tag (organizer = 2)
 POST http://localhost:8080/api/events
 X-User-Id: 2
 Content-Type: application/json
@@ -49,7 +67,8 @@ Content-Type: application/json
   "hallId": 1,
   "startsAt": "2026-12-01T19:00:00+03:00",
   "endsAt": "2026-12-01T22:00:00+03:00",
-  "price": 1500.00
+  "price": 1500.00,
+  "tagIds": [1]
 }
 
 ### Submit for moderation
@@ -60,10 +79,10 @@ X-User-Id: 2
 POST http://localhost:8080/api/events/1/publish
 X-User-Id: 1
 
-### Catalogue
-GET http://localhost:8080/api/events?city=Saint Petersburg
+### Catalogue, infinite scroll (hasNext, no total)
+GET http://localhost:8080/api/events?city=Saint Petersburg&page=0&size=20
 
-### Seat map
+### Seat map (booking-service: hall from event-service, reservations from its own db)
 GET http://localhost:8080/api/events/1/seats
 
 ### Book seats (customer = 3)
@@ -72,6 +91,17 @@ X-User-Id: 3
 Content-Type: application/json
 
 {"eventId": 1, "seatIds": [1, 2]}
+
+### Same seat again: 409
+POST http://localhost:8080/api/bookings
+X-User-Id: 3
+Content-Type: application/json
+
+{"eventId": 1, "seatIds": [1]}
+
+### My bookings
+GET http://localhost:8080/api/bookings
+X-User-Id: 3
 
 ### My tickets
 GET http://localhost:8080/api/tickets
@@ -85,46 +115,32 @@ X-User-Id: 2
 POST http://localhost:8080/api/bookings/1/cancel
 X-User-Id: 3
 
-### Swagger UI
-GET http://localhost:8080/swagger-ui.html
-
-### OpenAPI spec
-GET http://localhost:8080/v3/api-docs
-
-### Create tag (admin)
-POST http://localhost:8080/api/tags
-X-User-Id: 1
-Content-Type: application/json
-
-{"name": "Rock"}
-
-### Tags, page with total count in X-Total-Count
-GET http://localhost:8080/api/tags?page=0&size=20
-
-### Event with tags (organizer)
-POST http://localhost:8080/api/events
+### Cancel event: event-service flips the status, then asks booking-service to cancel bookings
+POST http://localhost:8080/api/events/1/cancel
 X-User-Id: 2
-Content-Type: application/json
 
-{
-  "title": "Rock night 2",
-  "categoryId": 1,
-  "hallId": 1,
-  "startsAt": "2026-12-02T19:00:00+03:00",
-  "endsAt": "2026-12-02T22:00:00+03:00",
-  "price": 1200.00,
-  "tagIds": [1]
-}
-
-### Catalogue, infinite scroll (hasNext, no total)
-GET http://localhost:8080/api/events?page=0&size=20
-
-### Seat map, second page of 20
-GET http://localhost:8080/api/events/1/seats?page=1&size=20
+### Cancel bookings by hand if booking-service was down during event cancel
+POST http://localhost:8080/api/events/1/bookings/cancel
+X-User-Id: 2
 
 ### Size above 50 is capped
 GET http://localhost:8080/api/halls/1/seats?size=500
 
-### Users, page with X-Total-Count (admin)
-GET http://localhost:8080/api/users?page=0&size=10
-X-User-Id: 1
+### Swagger UI, one entry per service in the top-right list
+GET http://localhost:8080/swagger-ui.html
+
+### OpenAPI of a service through gateway
+GET http://localhost:8080/booking-service/v3/api-docs
+
+### Circuit breakers of event-service (state CLOSED / OPEN, failure rate)
+GET http://localhost:8080/event-service/actuator/circuitbreakers
+
+### Health of booking-service with circuit breaker details
+GET http://localhost:8080/booking-service/actuator/health
+
+### Config as event-service sees it
+GET http://localhost:8888/event-service/default
+
+### Eureka registry
+GET http://localhost:8761/eureka/apps
+Accept: application/json

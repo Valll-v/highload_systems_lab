@@ -20,19 +20,19 @@ spring:
         - id: event-service-docs
           uri: lb://event-service
           predicates:
-            - Path=/event-service/v3/api-docs
+            - Path=/event-service/v3/api-docs,/event-service/actuator/**
           filters:
             - RewritePath=/event-service/(?<path>.*), /$\{path}
         - id: user-service-docs
           uri: lb://user-service
           predicates:
-            - Path=/user-service/v3/api-docs
+            - Path=/user-service/v3/api-docs,/user-service/actuator/**
           filters:
             - RewritePath=/user-service/(?<path>.*), /$\{path}
         - id: booking-service-docs
           uri: lb://booking-service
           predicates:
-            - Path=/booking-service/v3/api-docs
+            - Path=/booking-service/v3/api-docs,/booking-service/actuator/**
           filters:
             - RewritePath=/booking-service/(?<path>.*), /$\{path}
 

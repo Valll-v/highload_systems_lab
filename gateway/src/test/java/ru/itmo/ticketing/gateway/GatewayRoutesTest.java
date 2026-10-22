@@ -19,6 +19,8 @@ class GatewayRoutesTest {
                 .expectStatus().isEqualTo(503);
         client.get().uri("/api/events/1/seats").exchange()
                 .expectStatus().isEqualTo(503);
+        client.get().uri("/event-service/actuator/health").exchange()
+                .expectStatus().isEqualTo(503);
     }
 
     @Test

@@ -3,6 +3,29 @@
 Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервисы на Spring MVC
 и на WebFlux, доступ к базе через JPA и через R2DBC.
 
+## Схема
+
+```
+                         config-server :8888 (конфиги всем)      discovery-server :8761 (Eureka)
+                                   ^                                     ^
+клиент --> gateway :8080 ----------+-------------------------------------+
+             |
+             |-- /api/users/**  ------------------> user-service :8082   WebFlux + R2DBC, база users
+             |
+             |-- /api/events, venues, categories,
+             |   halls, tags ---------------------> event-service :8081  MVC + JPA, база ticketing
+             |                                        |  Feign: роль ---> user-service
+             |                                        |  Feign: отмена броней ---> booking-service
+             |
+             |-- /api/bookings, /api/tickets,
+                 /api/events/{id}/seats|sales ------> booking-service :8083  WebFlux + JPA, база bookings
+                                                       |  Feign: мероприятие, зал, места ---> event-service
+                                                       |  Feign: роль ---> user-service
+```
+
+Каждый Feign-вызов обёрнут в circuit breaker с fallback. Снаружи открыт только gateway,
+сервисы находят друг друга через Eureka.
+
 ## Модули
 
 | Модуль             | Порт | Что делает                                                    |
@@ -19,7 +42,8 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервис
 Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/users/**` уходит на
 `lb://user-service`, брони, билеты, схема мест и продажи (`/api/bookings/**`, `/api/tickets`,
 `/api/events/{id}/seats`, `/api/events/{id}/sales`) на `lb://booking-service`, остальное
-`/api/**` на `lb://event-service`. Адрес инстанса берётся из Eureka.
+`/api/**` на `lb://event-service`. Адрес инстанса берётся из Eureka. Спецификации OpenAPI и
+actuator сервисов проксируются по `/{service}/v3/api-docs` и `/{service}/actuator/**`.
 
 ## Запуск
 
@@ -109,6 +133,24 @@ Fallback (`UserClientFallback`): если user-service недоступен ил
 защищённые эндпоинты отвечают 503, а публичные (`GET /api/events`, `GET /api/events/{id}`)
 работают дальше и считают клиента анонимом. Состояние выключателя видно в
 `/actuator/health` и `/actuator/circuitbreakers` event-service.
+
+## Как посмотреть выключатель вживую
+
+Через gateway доступны actuator каждого сервиса: `/event-service/actuator/health`,
+`/booking-service/actuator/circuitbreakers`, то же для user-service.
+
+1. `docker compose stop user-service`.
+2. `GET /api/events/my` с `X-User-Id`: 503 с сообщением user-service is unavailable из fallback.
+   `GET /api/events` без заголовка работает.
+3. Повторить запрос шесть раз: в `/event-service/actuator/circuitbreakers` у выключателя
+   `UserClient#me(long)` состояние OPEN, event-service больше не звонит соседу.
+4. `docker compose start user-service`: через 10 секунд HALF_OPEN, после двух удачных
+   вызовов CLOSED.
+
+Тесты на то же самое без Docker-соседей: `UserClientCircuitBreakerTest` в event-service и
+`EventClientCircuitBreakerTest` в booking-service поднимают WireMock вместо соседнего сервиса,
+адрес подставляют через `spring.cloud.discovery.client.simple` вместо Eureka и проверяют, что
+пять ответов 500 открывают выключатель, а 401 и 404 в него не попадают.
 
 ## Роли
 
@@ -224,4 +266,4 @@ Hibernate запускает их перед insert и update, так что н�
 остаётся отменённым, а брони отменяются повторным вызовом позже (в логе event-service
 есть предупреждение с нужным путём).
 
-Примеры запросов: `docs/requests.http`.
+Примеры запросов в порядке показа: `docs/requests.http`.
