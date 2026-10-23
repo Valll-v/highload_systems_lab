@@ -1,0 +1,3 @@
+[submodule "configs-repo"]
+	path = configs-repo
+	url = https://github.com/Valll-v/highload-systems-lab-configs.git

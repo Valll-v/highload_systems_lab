@@ -1,13 +1,16 @@
 spring:
   application:
     name: config-server
-  profiles:
-    active: native
   cloud:
     config:
       server:
-        native:
-          search-locations: classpath:/config
+        git:
+          # Отдельный git-репозиторий с конфигами (подмодуль configs-repo).
+          # Локально читается с диска, в docker путь задаётся CONFIG_REPO_URI.
+          uri: ${CONFIG_REPO_URI:file://${user.dir}/../configs-repo}
+          default-label: main
+          search-paths: "{application}"
+          clone-on-start: true
 
 server:
   port: ${SERVER_PORT:8888}

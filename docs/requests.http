@@ -139,7 +139,7 @@ GET http://localhost:8080/event-service/actuator/circuitbreakers
 GET http://localhost:8080/booking-service/actuator/health
 
 ### Config as event-service sees it
-GET http://localhost:8888/event-service/default
+GET http://localhost:8888/event-service/docker
 
 ### Eureka registry
 GET http://localhost:8761/eureka/apps

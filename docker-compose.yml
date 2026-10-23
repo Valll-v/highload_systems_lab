@@ -23,6 +23,10 @@ services:
       args:
         MODULE: config-server
     container_name: ticketing-config
+    environment:
+      # Снимок configs-repo, собранный в образе. Можно указать удалённый git,
+      # например https://github.com/Valll-v/highload-systems-lab-configs.git
+      CONFIG_REPO_URI: file:///configs-repo
     ports:
       - "8888:8888"
     healthcheck:
@@ -37,8 +41,14 @@ services:
       args:
         MODULE: discovery-server
     container_name: ticketing-discovery
+    environment:
+      PROFILE: docker
+      CONFIG_URL: http://config-server:8888
     ports:
       - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8761"]
       interval: 5s
@@ -53,12 +63,7 @@ services:
     container_name: ticketing-event-service
     environment:
       CONFIG_URL: http://config-server:8888
-      EUREKA_URL: http://discovery-server:8761/eureka
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ticketing
-      DB_USER: ticketing
-      DB_PASSWORD: ticketing
+      PROFILE: docker
     expose:
       - "8081"
     depends_on:
@@ -77,12 +82,7 @@ services:
     container_name: ticketing-user-service
     environment:
       CONFIG_URL: http://config-server:8888
-      EUREKA_URL: http://discovery-server:8761/eureka
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: users
-      DB_USER: ticketing
-      DB_PASSWORD: ticketing
+      PROFILE: docker
     expose:
       - "8082"
     depends_on:
@@ -101,12 +101,7 @@ services:
     container_name: ticketing-booking-service
     environment:
       CONFIG_URL: http://config-server:8888
-      EUREKA_URL: http://discovery-server:8761/eureka
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: bookings
-      DB_USER: ticketing
-      DB_PASSWORD: ticketing
+      PROFILE: docker
     expose:
       - "8083"
     depends_on:
@@ -125,7 +120,7 @@ services:
     container_name: ticketing-gateway
     environment:
       CONFIG_URL: http://config-server:8888
-      EUREKA_URL: http://discovery-server:8761/eureka
+      PROFILE: docker
     ports:
       - "8080:8080"
     depends_on:

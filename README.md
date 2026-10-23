@@ -30,16 +30,17 @@ Spring Boot 3, Spring Cloud 2023.0, Java 21, PostgreSQL, Liquibase. Сервис
 
 | Модуль             | Порт | Что делает                                                    |
 |--------------------|------|---------------------------------------------------------------|
-| `config-server`    | 8888 | Spring Cloud Config, конфиги сервисов лежат в `src/main/resources/config` |
+| `config-server`    | 8888 | Spring Cloud Config с git-бэкендом, конфиги в отдельном репозитории `configs-repo` |
 | `discovery-server` | 8761 | Eureka, реестр сервисов                                        |
 | `gateway`          | 8080 | Spring Cloud Gateway, единая точка входа и общий Swagger       |
 | `event-service`    | 8081 | мероприятия, площадки, категории, теги (MVC, JPA); роли берёт у user-service, отмену броней просит у booking-service |
 | `user-service`     | 8082 | пользователи и роли (WebFlux, R2DBC), своя база `users`       |
 | `booking-service`  | 8083 | брони, резервы мест, билеты, схема занятости и продажи (WebFlux, JPA), своя база `bookings` |
 
-Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`)
-и регистрируются в Eureka. Адреса задаются переменными `CONFIG_URL` и `EUREKA_URL`.
-Снаружи открыт только gateway: маршруты в `config/gateway.yml`, `/api/users/**` уходит на
+Сервисы при старте забирают конфигурацию с config-server (`spring.config.import`,
+адрес в `CONFIG_URL`) и регистрируются в Eureka. Активный профиль задаёт переменная
+`PROFILE`: `dev` (по умолчанию, всё на localhost) или `docker` (адреса из docker-compose).
+Снаружи открыт только gateway: маршруты в `configs-repo/gateway/application.yml`, `/api/users/**` уходит на
 `lb://user-service`, брони, билеты, схема мест и продажи (`/api/bookings/**`, `/api/tickets`,
 `/api/events/{id}/seats`, `/api/events/{id}/sales`) на `lb://booking-service`, остальное
 `/api/**` на `lb://event-service`. Адрес инстанса берётся из Eureka. Спецификации OpenAPI и
@@ -64,13 +65,24 @@ Postgres: `ticketing` создаёт сам образ, остальные (`use
 (`/event-service/v3/api-docs`), так что Try it out ходит тем же путём, что и клиенты.
 Кнопка Authorize принимает id пользователя и подставляет его в заголовок `X-User-Id`.
 Реестр Eureka: `http://localhost:8761`. Конфиг сервиса глазами клиента:
-`http://localhost:8888/event-service/default`.
+`http://localhost:8888/event-service/docker`.
+
+## Конфигурация
+
+Config-server работает с git-бэкендом: конфиги лежат в отдельном репозитории
+[highload-systems-lab-configs](https://github.com/Valll-v/highload-systems-lab-configs),
+подключённом подмодулем `configs-repo` (`git clone --recurse-submodules` или
+`git submodule update --init`). В корне общие `application.yml` и `application-<профиль>.yml`,
+в каталоге каждого сервиса его собственные (`search-paths: {application}`). Профили: `dev`
+(localhost) и `docker` (хосты из compose). Адрес репозитория задаёт `CONFIG_REPO_URI`:
+локально по умолчанию `file://<проект>/configs-repo`, в docker-compose `file:///configs-repo`
+(снимок подмодуля, собранный в образе), можно указать и адрес на GitHub.
 
 Локально, только БД в Docker (каждый сервис в своём терминале):
 
 ```bash
 docker compose up -d postgres
-mvn -pl config-server spring-boot:run
+mvn -pl config-server spring-boot:run       # читает ../configs-repo
 mvn -pl discovery-server spring-boot:run
 mvn -pl event-service spring-boot:run
 mvn -pl user-service spring-boot:run
@@ -78,10 +90,9 @@ mvn -pl booking-service spring-boot:run
 mvn -pl gateway spring-boot:run
 ```
 
-Настройки БД: переменные `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-(по умолчанию `localhost:5432`, `ticketing/ticketing`, база `ticketing` у event-service,
-`users` у user-service, `bookings` у booking-service), читаются config-server из
-`config/<сервис>.yml`.
+Настройки БД лежат в `configs-repo/<сервис>/application-<профиль>.yml`: `ticketing/ticketing`,
+база `ticketing` у event-service, `users` у user-service, `bookings` у booking-service;
+в профиле `dev` хост `localhost:5432`, в `docker` хост `postgres`.
 
 Тесты (`mvn test`) поднимают PostgreSQL через Testcontainers, нужен запущенный Docker.
 В тестах config-server и Eureka не нужны: тестовый `application.yml` не импортирует
@@ -124,7 +135,7 @@ Eureka) с тем же `X-User-Id`, что прислал клиент. Отве
 проверка `@RequireRole` и параметр `@CurrentUser` делают один вызов на запрос.
 
 Вызов обёрнут в resilience4j через Spring Cloud CircuitBreaker
-(`spring.cloud.openfeign.circuitbreaker.enabled`). Настройки в `config/event-service.yml`:
+(`spring.cloud.openfeign.circuitbreaker.enabled`). Настройки в `configs-repo/event-service/application.yml`:
 окно 10 вызовов, при половине ошибок выключатель открывается на 10 секунд, таймаут вызова
 3 секунды. Ответы 401 и 404 от user-service ошибками не считаются (`ignore-exceptions`):
 это неизвестный пользователь, а не авария.
