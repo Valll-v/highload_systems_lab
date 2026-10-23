@@ -1,6 +1,10 @@
 spring:
   cloud:
     gateway:
+      # Без X-Forwarded-Prefix springdoc в сервисах пишет servers.url = http://localhost:8080,
+      # и Try it out в общем Swagger ходит через маршруты gateway, а не на /event-service/api/...
+      x-forwarded:
+        prefix-enabled: false
       routes:
         - id: booking-service-api
           uri: lb://booking-service
